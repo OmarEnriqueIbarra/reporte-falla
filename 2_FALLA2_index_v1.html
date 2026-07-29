@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte de Falla en Equipo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+:root {
+  --bg:#5a5a5a;--surface:#4a4a4a;--surface2:#525252;--surface3:#5e5e5e;
+  --border:#686868;--border2:#787878;--text:#ffffff;--muted:#dddddd;--muted2:#cccccc;
+  --accent:#6888c8;--green:#4a9e5c;--yellow:#a88a3a;--red:#b85550;--orange:#c07848;
+  --mec:#b85550;--elec:#c07848;--neum:#a88a3a;--reg:#9070c0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.6;}
+
+/* ── HEADER ── */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:22px 40px;display:flex;justify-content:space-between;align-items:center;}
+.header-left .eyebrow{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;}
+.header-left h1{font-size:20px;font-weight:800;letter-spacing:-.3px;}
+.header-left h1 span{color:var(--accent);}
+.header-right{display:flex;gap:10px;}
+
+/* ── TABS ── */
+.tabs-bar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 40px;gap:0;}
+.tab-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:13px 20px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── LAYOUT ── */
+.container{max-width:960px;margin:0 auto;padding:32px 40px;}
+.container-wide{max-width:1240px;margin:0 auto;padding:32px 40px;}
+.section-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+
+/* ── FORM ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px;}
+.card-title{font-size:13px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.card-title .icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.icon-blue{background:rgba(100,140,200,.12);color:var(--accent);}
+.icon-red{background:rgba(184,85,80,.12);color:var(--red);}
+.icon-yellow{background:rgba(168,138,58,.12);color:var(--yellow);}
+.icon-green{background:rgba(74,158,92,.12);color:var(--green);}
+.icon-purple{background:rgba(144,112,192,.12);color:var(--reg);}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;}
+.span-2{grid-column:span 2;}
+
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.field label .req{color:var(--red);margin-left:2px;}
+.field input,.field select,.field textarea{
+  background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;
+  transition:border-color .15s;width:100%;
+}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted2);}
+.field textarea{resize:vertical;min-height:80px;line-height:1.5;}
+.field select option{background:var(--surface2);}
+
+/* ── FAULT TYPE ── */
+.fault-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:4px;}
+.fault-option{position:relative;}
+.fault-option input[type=radio]{position:absolute;opacity:0;width:0;height:0;}
+.fault-label{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:14px 10px;border:1.5px solid var(--border);border-radius:8px;
+  cursor:pointer;transition:all .15s;background:var(--surface2);text-align:center;
+}
+.fault-label:hover{border-color:var(--border2);background:var(--surface3);}
+.fault-option input:checked + .fault-label{border-color:var(--accent);background:rgba(100,140,200,.07);}
+.fault-label .fault-icon{font-size:22px;}
+.fault-label .fault-name{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.fault-option input:checked + .fault-label .fault-name{color:var(--accent);}
+.fault-mec input:checked + .fault-label{border-color:var(--mec);background:rgba(184,85,80,.07);}
+.fault-mec input:checked + .fault-label .fault-name{color:var(--mec);}
+.fault-elec input:checked + .fault-label{border-color:var(--elec);background:rgba(192,120,72,.07);}
+.fault-elec input:checked + .fault-label .fault-name{color:var(--elec);}
+.fault-neum input:checked + .fault-label{border-color:var(--neum);background:rgba(168,138,58,.07);}
+.fault-neum input:checked + .fault-label .fault-name{color:var(--neum);}
+.fault-reg input:checked + .fault-label{border-color:var(--reg);background:rgba(144,112,192,.07);}
+.fault-reg input:checked + .fault-label .fault-name{color:var(--reg);}
+
+/* ── 5 PORQUES ── */
+.porques-list{display:flex;flex-direction:column;gap:10px;}
+.porque-row{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;}
+.porque-num{width:28px;height:28px;background:var(--surface2);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0;margin-top:6px;}
+.porque-row input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;transition:border-color .15s;}
+.porque-row input:focus{outline:none;border-color:var(--accent);}
+.porque-row input::placeholder{color:var(--muted2);}
+
+/* ── CAUSA RAIZ ── */
+.causa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;}
+.causa-option{position:relative;}
+.causa-option input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
+.causa-label{
+  display:flex;align-items:center;gap:8px;padding:10px 12px;
+  border:1.5px solid var(--border);border-radius:7px;cursor:pointer;
+  transition:all .15s;background:var(--surface2);font-size:12px;
+}
+.causa-label:hover{border-color:var(--border2);}
+.causa-option input:checked + .causa-label{border-color:var(--yellow);background:rgba(168,138,58,.07);color:var(--yellow);}
+.causa-check{width:14px;height:14px;border:1.5px solid var(--border2);border-radius:3px;flex-shrink:0;transition:all .15s;}
+.causa-option input:checked + .causa-label .causa-check{background:var(--yellow);border-color:var(--yellow);}
+
+/* ── BUTTONS ── */
+.btn{background:var(--accent);color:#0d1117;border:none;border-radius:7px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:'Inter',sans-serif;}
+.btn:hover{opacity:.85;}
+.btn-ghost{background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:10px 18px;font-size:13px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;}
+.btn-ghost:hover{color:var(--text);border-color:var(--border2);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-green{background:var(--green);color:#0d1117;}
+.btn-sm{padding:6px 14px;font-size:12px;}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+
+/* ── HISTORIAL TABLE ── */
+.hist-table{width:100%;border-collapse:collapse;font-size:12px;}
+.hist-table thead tr{background:var(--surface2);}
+.hist-table th{padding:10px 14px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+.hist-table tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+.hist-table tbody tr:hover{background:var(--surface2);}
+.hist-table td{padding:10px 14px;vertical-align:middle;}
+.hist-table td.code{font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;}
+.badge-mec{background:rgba(184,85,80,.12);color:var(--mec);}
+.badge-elec{background:rgba(192,120,72,.12);color:var(--elec);}
+.badge-neum{background:rgba(168,138,58,.12);color:var(--neum);}
+.badge-reg{background:rgba(144,112,192,.12);color:var(--reg);}
+.badge-green{background:rgba(74,158,92,.12);color:var(--green);}
+.badge-gray{background:rgba(110,118,129,.15);color:var(--muted);}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-mec::before{background:var(--mec);}
+.stat-elec::before{background:var(--elec);}
+.stat-neum::before{background:var(--neum);}
+.stat-reg::before{background:var(--reg);}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.stat-val{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;}
+.stat-mec .stat-val{color:var(--mec);}
+.stat-elec .stat-val{color:var(--elec);}
+.stat-neum .stat-val{color:var(--neum);}
+.stat-reg .stat-val{color:var(--reg);}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:680px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:28px;}
+.modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:0 4px;line-height:1;}
+.modal-close:hover{color:var(--text);}
+.modal-field{margin-bottom:12px;}
+.modal-field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;}
+.modal-field p{font-size:13px;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;min-height:36px;}
+.modal-field p.multiline{white-space:pre-wrap;line-height:1.6;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* ── FILTERS ── */
+.filters-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+.filters-bar input,.filters-bar select{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 12px;}
+.filters-bar input{min-width:200px;}
+.filters-bar select{min-width:150px;}
+
+/* ── EMPTY ── */
+.empty-hist{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-hist .icon{font-size:44px;margin-bottom:12px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--green);color:#0d1117;font-weight:700;font-size:13px;padding:12px 20px;border-radius:8px;z-index:200;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* ── DASHBOARD ── */
+.dash-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.dash-kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden;}
+.dash-kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.dk-blue::before{background:var(--accent);}
+.dk-green::before{background:var(--green);}
+.dk-orange::before{background:var(--orange);}
+.dk-purple::before{background:var(--reg);}
+.dash-kpi .dk-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;}
+.dash-kpi .dk-val{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;line-height:1;}
+.dk-blue .dk-val{color:var(--accent);}
+.dk-green .dk-val{color:var(--green);}
+.dk-orange .dk-val{color:var(--orange);}
+.dk-purple .dk-val{color:var(--reg);}
+.dash-kpi .dk-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.dash-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
+.dash-chart-full{margin-bottom:24px;}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;}
+.dash-card h3{font-size:13px;font-weight:700;margin-bottom:3px;}
+.dash-card p{font-size:11px;color:var(--muted);margin-bottom:16px;}
+.no-dash{text-align:center;padding:80px 20px;color:var(--muted);}
+.no-dash .icon{font-size:48px;margin-bottom:14px;}
+/* top equip table */
+.top-table{width:100%;border-collapse:collapse;font-size:12px;}
+.top-table td{padding:9px 12px;border-bottom:1px solid var(--border);}
+.top-table tr:last-child td{border-bottom:none;}
+.top-table tr:hover td{background:var(--surface2);}
+
+/* ── COMPARATIVA ── */
+.comp-selector{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.comp-selector label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;}
+.comp-selector select{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:8px 12px;min-width:130px;}
+.comp-vs{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--border2);}
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
+.comp-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;}
+.comp-card h3{font-size:13px;font-weight:700;margin-bottom:3px;}
+.comp-card p{font-size:11px;color:var(--muted);margin-bottom:16px;}
+.comp-kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;}
+.comp-kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.comp-kpi .ck-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.comp-kpi .ck-row{display:flex;align-items:flex-end;gap:10px;}
+.comp-kpi .ck-a{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:var(--accent);}
+.comp-kpi .ck-b{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:var(--orange);}
+.comp-kpi .ck-delta{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;}
+.delta-up{background:rgba(184,85,80,.12);color:var(--red);}
+.delta-down{background:rgba(74,158,92,.12);color:var(--green);}
+.delta-eq{background:rgba(110,118,129,.15);color:var(--muted);}
+.comp-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px;}
+.comp-table{width:100%;border-collapse:collapse;font-size:12px;}
+.comp-table thead tr{background:var(--surface2);}
+.comp-table th{padding:10px 14px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+.comp-table th.sem-a{color:var(--accent);}
+.comp-table th.sem-b{color:var(--orange);}
+.comp-table td{padding:10px 14px;border-bottom:1px solid var(--border);}
+.comp-table tbody tr:hover td{background:var(--surface2);}
+.comp-table td.linea-code{font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);}
+.comp-table td.val-a{font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);text-align:right;}
+.comp-table td.val-b{font-family:'Space Mono',monospace;font-size:12px;color:var(--orange);text-align:right;}
+.comp-table td.val-delta{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;text-align:right;}
+.comp-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;}
+.comp-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+.comp-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.no-comp{text-align:center;padding:60px 20px;color:var(--muted);}
+.no-comp .icon{font-size:44px;margin-bottom:12px;}
+
+/* ── PRINT ── */
+@media print{
+  .tabs-bar,.header-right,.btn-row,.filters-bar,.actions-col,.modal-overlay{display:none!important;}
+  .tab-panel{display:block!important;}
+  body,*{background:#fff!important;color:#111!important;border-color:#ddd!important;}
+}
+
+input[type=date],
+input[type=time] {
+  color-scheme: dark;
+}
+input[type=date]::-webkit-calendar-picker-indicator,
+input[type=time]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(2);
+  cursor: pointer;
+  opacity: .75;
+}
+input[type=date]::-webkit-calendar-picker-indicator:hover,
+input[type=time]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="eyebrow">Mantenimiento · Líneas de Producción</div>
+    <h1>Reporte de <span>Falla en Equipo</span></h1>
+  </div>
+  <div class="header-right">
+    <button class="btn-ghost btn-sm" onclick="switchTab('historial')">📋 Ver historial</button>
+    <button class="btn btn-sm" onclick="switchTab('nuevo');resetForm()">+ Nuevo reporte</button>
+  </div>
+</div>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" id="tab-btn-nuevo" onclick="switchTab('nuevo')">📝 Nuevo reporte</button>
+  <button class="tab-btn" id="tab-btn-pendientes" onclick="switchTab('pendientes')" style="color:#f59e0b;border-color:#f59e0b">🕐 A finalizar <span id="pendCount" style="background:#f59e0b;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px">0</span></button>
+  <button class="tab-btn" id="tab-btn-repuestos" onclick="switchTab('repuestos')" style="color:#2a6496;border-color:#2a6496">🔩 Repuestos <span id="repCount" style="background:#2a6496;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px">0</span></button>
+  <button class="tab-btn" id="tab-btn-historial" onclick="switchTab('historial')">📋 Historial (<span id="histCount">0</span>)</button>
+</div>
+<div style="padding:6px 20px;font-size:11px;color:var(--muted)" id="estadoSync">Conectando con la planilla...</div>
+
+<!-- ══════ TAB NUEVO ══════ -->
+<!-- BANNER TRABAJOS PENDIENTES -->
+<div id="bannerPendientes" style="display:none;background:#f59e0b;color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span style="font-size:20px">&#128336;</span>
+    <div>
+      <div style="font-size:13px;font-weight:800">Hay trabajos pendientes para continuar este turno</div>
+      <div id="bannerDetalle" style="font-size:12px;opacity:.9;margin-top:2px"></div>
+    </div>
+  </div>
+  <button onclick="switchTab('pendientes')" style="background:#fff;color:#f59e0b;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Ver trabajos &#8594;</button>
+</div>
+
+<!-- TAB PENDIENTES -->
+<div id="tab-repuestos" class="tab-panel">
+  <div id="repuestosBody"></div>
+</div>
+
+<div id="tab-pendientes" class="tab-panel">
+  <div id="pendientesBody"></div>
+</div>
+
+<div id="tab-nuevo" class="tab-panel active">
+<div class="container">
+
+  <!-- IDENTIFICACIÓN -->
+  <div class="card">
+    <div class="card-title"><span class="icon icon-blue">🏭</span> Identificación del evento</div>
+    <div class="grid-3" style="margin-bottom:14px;">
+      <div class="field">
+        <label>Fecha <span class="req">*</span></label>
+        <input type="date" id="f_fecha" onchange="onFechaChange()">
+      </div>
+      <div class="field">
+        <label>Hora inicio <span class="req">*</span></label>
+        <input type="time" id="f_hora_inicio" onchange="calcTiempoAtencion()">
+      </div>
+      <div class="field">
+        <label>Hora fin</label>
+        <input type="time" id="f_hora_fin" onchange="calcTiempoAtencion()">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Sector <span class="req">*</span></label>
+        <input type="text" id="f_sector" placeholder="Ej: Producción / Fraccionado">
+      </div>
+      <div class="field">
+        <label>Semana</label>
+        <input type="text" id="f_semana" placeholder="Se calcula automático" oninput="this.dataset.manual=this.value?'1':''">
+      </div>
+    </div>
+  </div>
+
+  <!-- LÍNEA Y EQUIPO -->
+  <div class="card">
+    <div class="card-title"><span class="icon icon-blue">⚙️</span> Línea y equipo afectado</div>
+    <div class="grid-2" style="margin-bottom:14px;">
+      <div class="field">
+        <label>Línea <span class="req">*</span></label>
+        <div style="position:relative">
+          <input type="text" id="f_linea_input" placeholder="Escribí código (JA) o nombre de línea..." autocomplete="off"
+            oninput="filtrarLineas()" onblur="ocultarSugerencias()"
+            style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;outline:none">
+          <input type="hidden" id="f_linea" value="">
+          <div id="linea_sugg" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--accent);border-top:none;border-radius:0 0 8px 8px;z-index:50;max-height:220px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.3)"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Equipo <span class="req">*</span></label>
+        <select id="f_equipo" disabled onchange="onEquipoChange()">
+          <option value="">— Seleccionar equipo —</option>
+          <option value="__manual__">✏️ Escribir manualmente...</option>
+        </select>
+        <input type="text" id="f_equipo_manual" placeholder="Descripcíon del equipo..." autocomplete="off"
+          style="display:none;margin-top:6px;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;outline:none">
+      </div>
+    </div>
+    <div class="field">
+      <label>Código de equipo</label>
+      <input type="text" id="f_cod_equipo" readonly placeholder="Se completa automáticamente" style="color:var(--accent);font-family:'Space Mono',monospace;">
+    </div>
+  </div>
+
+  <!-- TIPO DE FALLA -->
+  <div class="card">
+    <div class="card-title"><span class="icon icon-red">⚠️</span> Origen del problema</div>
+    <div class="fault-grid">
+      <div class="fault-option fault-mec">
+        <input type="checkbox" name="tipo_falla" id="ff_mec" value="Falla Mecánica" onchange="onTipoFallaChange()">
+        <label class="fault-label" for="ff_mec">
+          <span class="fault-icon">🔩</span>
+          <span class="fault-name">Falla Mecánica</span>
+        </label>
+      </div>
+      <div class="fault-option fault-elec">
+        <input type="checkbox" name="tipo_falla" id="ff_elec" value="Falla Eléctrica" onchange="onTipoFallaChange()">
+        <label class="fault-label" for="ff_elec">
+          <span class="fault-icon">⚡</span>
+          <span class="fault-name">Falla Eléctrica</span>
+        </label>
+      </div>
+      <div class="fault-option fault-neum">
+        <input type="checkbox" name="tipo_falla" id="ff_neum" value="Falla Neumática" onchange="onTipoFallaChange()">
+        <label class="fault-label" for="ff_neum">
+          <span class="fault-icon">💨</span>
+          <span class="fault-name">Falla Neumática</span>
+        </label>
+      </div>
+      <div class="fault-option fault-reg">
+        <input type="checkbox" name="tipo_falla" id="ff_reg" value="Regulación" onchange="onTipoFallaChange()">
+        <label class="fault-label" for="ff_reg">
+          <span class="fault-icon">🔧</span>
+          <span class="fault-name">Regulación</span>
+        </label>
+      </div>
+      <div class="fault-option fault-mej">
+        <input type="checkbox" name="tipo_falla" id="ff_mej" value="Mejora" onchange="onTipoFallaChange()">
+        <label class="fault-label" for="ff_mej">
+          <span class="fault-icon">⬆️</span>
+          <span class="fault-name">Mejora</span>
+        </label>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">Podés seleccionar hasta 2 orígenes (ej: mecánico + eléctrico)</div>
+  </div>
+
+  <!-- DESCRIPCIÓN -->
+  <div class="card">
+    <div class="card-title"><span class="icon icon-yellow">📋</span> Descripción del problema</div>
+    <div class="field" style="margin-bottom:14px;">
+      <label>Descripción del problema <span class="req">*</span></label>
+      <textarea id="f_descripcion" rows="3" placeholder="Describir claramente el problema observado en el equipo…"></textarea>
+    </div>
+    <div class="field">
+      <label>Componente que falló</label>
+      <input type="text" id="f_componente" placeholder="Ej: Motor principal, rodamiento, válvula solenoide…">
+    </div>
+  </div>
+
+  <!-- ANÁLISIS 5 POR QUÉ -->
+  <div class="card">
+    <div class="card-title"><span class="icon icon-purple">🔍</span> Análisis del problema — 5 Por Qué</div>
+    <div class="porques-list">
+      <div class="porque-row"><div class="porque-num">1</div><input type="text" id="pq1" placeholder="¿Por qué ocurrió el problema?"></div>
+      <div class="porque-row"><div class="porque-num">2</div><input type="text" id="pq2" placeholder="¿Por qué?"></div>
+      <div class="porque-row"><div class="porque-num">3</div><input type="text" id="pq3" placeholder="¿Por qué?"></div>
+      <div class="porque-row"><div class="porque-num">4</div><input type="text" id="pq4" placeholder="¿Por qué?"></div>
+      <div class="porque-row"><div class="porque-num">5</div><input type="text" id="pq5" placeholder="¿Por qué? (causa raíz)"></div>
+    </div>
+  </div>
+
+  <!-- CAUSA RAIZ -->
+  <div class="card">
+    <div class="card-title"><span class="icon icon-yellow">🎯</span> Causa raíz identificada</div>
+    <div class="causa-grid">
+      <div class="causa-option"><input type="checkbox" id="cr1" value="Desgaste natural"><label class="causa-label" for="cr1"><span class="causa-check"></span>Desgaste natural</label></div>
+      <div class="causa-option"><input type="checkbox" id="cr2" value="Problemas de operación"><label class="causa-label" for="cr2"><span class="causa-check"></span>Problemas de operación</label></div>
+      <div class="causa-option"><input type="checkbox" id="cr3" value="Falta de mantenimiento preventivo/predictivo"><label class="causa-label" for="cr3"><span class="causa-check"></span>Falta de mant. preventivo</label></div>
+      <div class="causa-option"><input type="checkbox" id="cr4" value="Problemas externos"><label class="causa-label" for="cr4"><span class="causa-check"></span>Problemas externos</label></div>
+      <div class="causa-option"><input type="checkbox" id="cr5" value="Repuesto no adecuado"><label class="causa-label" for="cr5"><span class="causa-check"></span>Repuesto no adecuado</label></div>
+      <div class="causa-option"><input type="checkbox" id="cr6" value="Material inadecuado"><label class="causa-label" for="cr6"><span class="causa-check"></span>Material inadecuado</label></div>
+      <div class="causa-option"><input type="checkbox" id="cr7" value="Diseño inadecuado"><label class="causa-label" for="cr7"><span class="causa-check"></span>Diseño inadecuado</label></div>
+      <div class="causa-option"><input type="checkbox" id="cr8" value="Materia prima"><label class="causa-label" for="cr8"><span class="causa-check"></span>Materia prima</label></div>
+      <div class="causa-option"><input type="checkbox" id="cr9" value="Insumos"><label class="causa-label" for="cr9"><span class="causa-check"></span>Insumos</label></div>
+    </div>
+  </div>
+
+  <!-- TÉCNICO Y ACCIONES -->
+  <div class="card">
+    <div class="card-title"><span class="icon icon-green">👷</span> Técnico responsable y acciones</div>
+    <div class="grid-2" style="margin-bottom:14px;">
+      <div class="field">
+        <label>Técnico responsable <span class="req">*</span></label>
+        <select id="f_tecnico" onchange="onTecnicoChange()">
+          <option value="">— Seleccionar técnico —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Técnico 2 (opcional)</label>
+        <select id="f_tecnico2" onchange="onTecnicoChange()">
+          <option value="">— Sin segundo técnico —</option>
+        </select>
+      </div>
+      <div class="field" id="tiempoAtencionField" style="display:none">
+        <label>Tiempo de atención</label>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--orange)" id="tiempoAtencionVal">—</div>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-bottom:14px;">
+      <div class="field">
+        <label id="lbl_acciones1">Acciones tomadas / correctivas</label>
+        <textarea id="f_acciones" rows="3" placeholder="Describir las acciones realizadas…"></textarea>
+      </div>
+      <div class="field" id="field_acciones2" style="display:none">
+        <label id="lbl_acciones2">Acciones tomadas / correctivas — Técnico 2</label>
+        <textarea id="f_acciones2" rows="3" placeholder="Describir las acciones realizadas…"></textarea>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label id="lbl_obs1">Observaciones adicionales</label>
+        <textarea id="f_obs" rows="2" placeholder="Cualquier dato relevante adicional…"></textarea>
+      </div>
+      <div class="field" id="field_obs2" style="display:none">
+        <label id="lbl_obs2">Observaciones adicionales — Técnico 2</label>
+        <textarea id="f_obs2" rows="2" placeholder="Cualquier dato relevante adicional…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="field" style="margin-top:14px">
+    <label>Estado del trabajo</label>
+    <select id="f_estado" style="font-size:14px">
+      <option value="En proceso">🔄 En proceso</option>
+      <option value="Resuelto provisorio">⚠️ Resuelto provisorio</option>
+      <option value="Resuelto definitivo">✅ Resuelto definitivo</option>
+      <option value="Pendiente repuesto">🔩 Pendiente repuesto</option>
+      <option value="Continuar en próximo turno">🕐 Continuar en próximo turno</option>
+    </select>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-ghost" onclick="resetForm()">Limpiar formulario</button>
+    <button class="btn btn-green" onclick="guardarReporte()">💾 Guardar reporte</button>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════ TAB HISTORIAL ══════ -->
+<div id="tab-historial" class="tab-panel">
+<div class="container-wide">
+
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card stat-mec"><div class="stat-lbl">Falla Mecánica</div><div class="stat-val" id="st_mec">0</div></div>
+    <div class="stat-card stat-elec"><div class="stat-lbl">Falla Eléctrica</div><div class="stat-val" id="st_elec">0</div></div>
+    <div class="stat-card stat-neum"><div class="stat-lbl">Falla Neumática</div><div class="stat-val" id="st_neum">0</div></div>
+    <div class="stat-card stat-reg"><div class="stat-lbl">Regulación</div><div class="stat-val" id="st_reg">0</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <input type="text" id="filt_busca" placeholder="🔍 Buscar por línea, equipo, técnico…" oninput="renderHistorial()">
+    <select id="filt_tipo" onchange="renderHistorial()">
+      <option value="">Todos los tipos</option>
+      <option value="Falla Mecánica">Falla Mecánica</option>
+      <option value="Falla Eléctrica">Falla Eléctrica</option>
+      <option value="Falla Neumática">Falla Neumática</option>
+      <option value="Regulación">Regulación</option>
+    </select>
+    <select id="filt_estado" onchange="renderHistorial()">
+      <option value="">Todos los estados</option>
+      <option value="En proceso">En proceso</option>
+      <option value="Resuelto provisorio">Resuelto provisorio</option>
+      <option value="Resuelto definitivo">Resuelto definitivo</option>
+      <option value="Pendiente repuesto">Pendiente repuesto</option>
+      <option value="Continuar en próximo turno">Continuar en próximo turno</option>
+    </select>
+    <select id="filt_linea" onchange="renderHistorial()">
+      <option value="">Todas las líneas</option>
+    </select>
+    <button class="btn-ghost btn-sm" onclick="exportXLSX()">⬇ Exportar Excel</button>
+    <button class="btn-ghost btn-sm" onclick="guardarBackup()" style="color:#4a9e5c;border-color:#4a9e5c">💾 Guardar backup</button>
+    <button class="btn-ghost btn-sm" onclick="document.getElementById('importFile').click()" style="color:#6488c8;border-color:#6488c8">📂 Cargar backup</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="cargarBackup(this)">
+    <label class="btn-ghost btn-sm" style="cursor:pointer;display:inline-flex;align-items:center">⬆ Importar Excel<input type="file" accept=".xlsx,.csv" style="display:none" onchange="importFile(event)"></label>
+  </div>
+
+  <div id="histContent">
+    <div class="empty-hist"><div class="icon">📋</div>No hay reportes guardados todavía.<br>Creá el primero desde la pestaña <strong>Nuevo reporte</strong>.</div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════ MODAL DETALLE ══════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const EQUIPOS = {"JA00041":[{"cod":"JJ10794","desc":"ENVOLVEDORA-LINEA LA GOTITA N°1-"},{"cod":"JJ11138","desc":"ENGANCHADORA-LINEA LA GOTITA N°1-"},{"cod":"JJ12577","desc":"HORNO -LINEA LA GOTITA N° 1-"},{"cod":"JJ12962","desc":"BALANZA DINAMICA -LINEA LA GOTITA N°1-"},{"cod":"JJ14002","desc":"ESTUCHADORA-LINEA LA GOTITA N°1-"}],"JA00042":[{"cod":"JJ11899","desc":"BALANZA DINAMICA -LINEA  LA GOTITA GEL-"},{"cod":"JJ12574","desc":"ESTUCHADORA-LINEALA GOTITA GEL-"},{"cod":"JJ12576","desc":"ENVOLVEDORA-LINEA LA GOTITA GEL-"},{"cod":"JJ12579","desc":"ENGANCHADORA-LINEA LA GOTITA GEL-"},{"cod":"JJ50176","desc":"HORNO -LINEA LA GOTITA GEL-"},{"cod":"JJ50893","desc":"FRACCIONADORA-LINEA LA GOTITA GEL-"}],"JA00043":[{"cod":"JJ10112","desc":"ENGANCHADORA-LINEA POXIPOL 14-"},{"cod":"JJ10589","desc":"MAQUINA DOBLADORA DE FOLLETOS"},{"cod":"JJ10649","desc":"ENVOLVEDORA-LINEA POXIPOL 14-"},{"cod":"JJ11084","desc":"COLOCADORA DE BANDEJA ESPATULA"},{"cod":"JJ14577","desc":"CONJUNTO DE DISPOSITIVO"},{"cod":"JJ50171","desc":"MAQUINA ESTUCHADORA"},{"cod":"JJ50209","desc":"HORNO DE PASTA"},{"cod":"JJ50210","desc":"HORNO DE PASTA"},{"cod":"JJ50894","desc":"FRACCIONADORA-LINEA POXIPOL 14-"}],"JA00044":[{"cod":"JJ11594","desc":"HORNO -LINEA POXILINA 250-"},{"cod":"JJ50216","desc":"ESTUCHADORA VERTICAL"},{"cod":"JJ50729","desc":"CINTA TRANSPORTADORA A BANDA"},{"cod":"JJ50923","desc":"ENVOLVEDORA VERTICAL"}],"JA00045":[{"cod":"JJ09749","desc":"CINTA TRANSPORTADORA"},{"cod":"JJ12459","desc":"MEZCLADOR ESTATICO"}],"JA00046":[{"cod":"JJ50665","desc":"CINTA TRANSPORTADORA"}],"JA00047":[{"cod":"JJ10768","desc":"ESTUCHADORA-LINEAPOXIRAN/UNIPOX-"}],"JA00048":[{"cod":"JJ10482","desc":"ENVOLVEDORA-LINEA POXIRAN/ FASTIX-"},{"cod":"JJ10861","desc":"CINTA TRANSPORTADORA"}],"JA00049":[{"cod":"JJ04400","desc":"CARGADOR DE LATAS"},{"cod":"JJ04426","desc":"MAQUINA ENVASADORA"},{"cod":"JJ04697","desc":"ENVOLVEDORA-LINEA POXIRAN LATAS-"},{"cod":"JJ04702","desc":"HORNO -LINEA POXIRAN LATAS-"}],"JA00051":[{"cod":"JJ11109","desc":"PRENSA TURELLO -LINEA CARTUCHO-"},{"cod":"JJ12985","desc":"DISPOSITIVO CARGADOR"},{"cod":"JJ50453","desc":"MAQUINA CARTUCHADORA"}],"JA00052":[{"cod":"JJ09719","desc":"CINTA TRANSPORTADORA"},{"cod":"JJ10710","desc":"ENGANCHADORA-LINEA FASTIX-"},{"cod":"JJ10733","desc":"ESTUCHADORA-LINEA FASTIX-"},{"cod":"JJ14418","desc":"FRACCIONADORA-LINEA FASTIX N°2-"},{"cod":"JJ14419","desc":"BOMBA"},{"cod":"JJ14420","desc":"CINTA TRANSPORTADORA"},{"cod":"JJ14676","desc":"BOMBA"},{"cod":"JJ15981","desc":"Cinta inclinada ancho 280mm"},{"cod":"JJ15982","desc":"Cinta inclinada ancho 280mm (2)"},{"cod":"JJ16128","desc":"Cinta horizontal A 120m"},{"cod":"JJ50653","desc":"FRACCIONADORA-LINEA FASTIX N°1-"}],"JA00053":[{"cod":"JJ13691","desc":"ENSAMBLADORA - PICO Y TAPA LA GOTITA N°1-"},{"cod":"JJ14166","desc":"ENSAMBLADORA - PICO Y TAPA LA GOTITA N°2-"}],"JA00054":[{"cod":"JJ14288","desc":"FRACCIONADORA-LINEA LA GOTITA IWK5-"},{"cod":"JJ14731","desc":"CONJUNTO DE DISPOSITIVOS"}],"JA00055":[{"cod":"JJ14287","desc":"FRACCIONADORA-LINEA LA GOTITA IWK6-"},{"cod":"JJ15367","desc":"CINTA TRANSPORTADORA"},{"cod":"JJ15439","desc":"CONJUNTO DE DISPOSITIVOS"}],"JA00057":[{"cod":"JJ12478","desc":"LLENADORA DE BOTELLAS"}],"JA00058":[{"cod":"JJ11592","desc":"ETIQUETADORA -LINEA LA GOTITA 10ML-"}],"JA00059":[{"cod":"JJ05334","desc":"ENSAMBLADORA - TAPA RETEN N°2-"},{"cod":"JJ10049","desc":"ENSAMBLADORA - TAPA RETEN N°1-"}],"JA00060":[{"cod":"JJ09513","desc":"FRACCIONADORA-LINEA VOLIGOMA 50ML-"},{"cod":"JJ09722","desc":"ALIMENTADOR"},{"cod":"JJ09780","desc":"RAMPA"},{"cod":"JJ09783","desc":"HORNO -LINEA VOLIGOMA 50ML-"},{"cod":"JJ09784","desc":"ENVOLVEDORA-LINEA VOLIGOMA 50ML-"},{"cod":"JJ10593","desc":"ALIMENTADOR BOTELLA -LINEA VOLIGOMA 50ML-"},{"cod":"JJ11126","desc":"ETIQUETADORA -LINEA VOLIGOMA 50ML-"},{"cod":"JJ13051","desc":"ALIMENTADOR VIBRATORIO"}],"JA00062":[{"cod":"JJ10111","desc":"ENGANCHADORA - LINEA POXILINA-"},{"cod":"JJ10793","desc":"ENVOLVEDORA-LINEA POXILINA-"},{"cod":"JJ12135","desc":"ESTUCHADORA -LINEA POXILINA-"},{"cod":"JJ50314","desc":"MINIFRIPACK -LINEA POXILINA-"},{"cod":"JJ51069","desc":"MAQUINA EXTRUSORA"},{"cod":"JJ51070","desc":"MAQUINA EXTRUSORA (2)"},{"cod":"JJ51071","desc":"ENVOLVEDORA"}],"JA00063":[{"cod":"JJ02530","desc":"CINTA TRANSPORTADORA"},{"cod":"JJ09873","desc":"FRACCIONADORA-LINEA POXIMIX 0.50 KG-"}],"JA00064":[{"cod":"JJ10039","desc":"FRACCIONADORA-LINEA POXIMIX 1.25 KG-"},{"cod":"JJ11336","desc":"CINTA"},{"cod":"JJ14655","desc":"CONJUNTO DOSIFICADOR"},{"cod":"JJ14737","desc":"ELEVADOR A CANGILONES"},{"cod":"JJ14751","desc":"TOLVA DOSIFICADORA DE FRACCIONADORES"},{"cod":"JJ16263","desc":"Cinta transportadora SAE1045"}],"JA00065":[{"cod":"JJ09717","desc":"APRETADOR"},{"cod":"JJ10776","desc":"ENFRIADOR"},{"cod":"JJ11897","desc":"FRACCIONADORA-LINEA EL PULPITO-"},{"cod":"JJ12967","desc":"SECADOR FRIGORIFICO DE AIRE COMPRIMIDO"},{"cod":"JJ14675","desc":"BOMBA"}],"JA00066":[{"cod":"JJ05923","desc":"RECUBRIDORA DE PAPELES CON CERAS SINTETICAS"},{"cod":"JJ10713","desc":"EXTRUSORA"},{"cod":"JJ10778","desc":"ENFRIADOR"},{"cod":"JJ15335","desc":"FUSOR DE HOT MELT"}],"JA00067":[{"cod":"JJ10638","desc":"APLICADORA DE HOT MELT -LINEA POXITA-"},{"cod":"JJ11113","desc":"TROQUELADORA -LINEA POXITAS-"}],"JA00068":[{"cod":"JJ09949","desc":"BLISTERA-DOBLE-"},{"cod":"JJ13597","desc":"ENFRIADOR"}],"JA00069":[{"cod":"JJ51135","desc":"BLISTERA-SIMPLE-"}],"JA00070":[{"cod":"JJ10773","desc":"MAQUINA LLENADORA"},{"cod":"JJ12497","desc":"HORNO -LINEA POXIPOL 70-"},{"cod":"JJ50493","desc":"CINTA TRANSPORTADORA"}],"JA00080":[{"cod":"JJ14480","desc":"FRACCIONADORA-LINEA POXIMIX 5.00 KG-"},{"cod":"JJ14738","desc":"ELEVADOR A CANGILONES"},{"cod":"JJ14752","desc":"TOLVA SUPERIOR -POXIMIX 5.00 KG-"},{"cod":"JJ15411","desc":"BALANZA DINAMICA -LINEA POXIMX 5.00 KG-"},{"cod":"JJ50606","desc":"CINTA TRANSPORTADORA"}],"JA00081":[{"cod":"JJ09796","desc":"LLENADORA DE POMOS"},{"cod":"JJ14479","desc":"MAQUINA ETIQUETADORA"}],"JA00086":[{"cod":"JJ14793","desc":"ENVOLVEDORA-LINEA VOLIGOMA 30ML-"},{"cod":"JJ14822","desc":"FRACCIONADORA-LINEA VOLIGOMA 30ML-"},{"cod":"JJ14823","desc":"ETIQUETADORA- LINEA VOLIGOMA 30ML-"},{"cod":"JJ50917","desc":"HORNO -LINEA VOLIGOMA 30ML-"}],"JA00087":[{"cod":"JJ13973","desc":"TAPADORA"},{"cod":"JJ13974","desc":"ENGOMADORA"},{"cod":"JJ13975","desc":"TAMBOREADOR DE TEJOS (1)"},{"cod":"JJ13976","desc":"TAMBOREADOR DE TEJOS (2)"}],"JA00089":[{"cod":"JJ14289","desc":"FRACCIONADORA-LINEA UNIPOX DOBLE-"},{"cod":"JJ15130","desc":"CONJUNTO DE DISPOSITIVOS"}],"JA00091":[{"cod":"JJ02421","desc":"ESTUCHADORA-LINEA ECCOLE-"},{"cod":"JJ12575","desc":"BALANZA DINAMICA -LINEA ECCOLE-"},{"cod":"JJ14837","desc":"HORNO PARA TERMOCONTRACCION"},{"cod":"JJ15140","desc":"FRACCIONADORA-LINEA ECCOLE-"},{"cod":"JJ15629","desc":"ENGANCHADORA-LINEA ECCOLE-"},{"cod":"JJ15735","desc":"ENVOLVEDORA-LINEA ECCOLE-"}],"JA00092":[{"cod":"JJ15412","desc":"ESTUCHADORA-LINEA LA GOTITA N°2-"},{"cod":"JJ15413","desc":"BALANZA DINAMICA -LINEA  LA GOTITA N°2-"},{"cod":"JJ15414","desc":"ENGANCHADORA"},{"cod":"JJ15420","desc":"ENVOLVEDORA-LINEA LA GOTITA N°2-"},{"cod":"JJ15421","desc":"HORNO -LINEA LA GOTITA N° 2-"}],"JA00093":[{"cod":"JJ05232","desc":"RODADOR"}],"JA00094":[{"cod":"JJ10472","desc":"TANQUE"}],"JA00095":[{"cod":"JJ11920","desc":"MAQUINA MEZCLADORA-DISPERSORA"},{"cod":"JJ11921","desc":"PRENSA HIDRAULICA"}],"JA00096":[{"cod":"JJ14486","desc":"MAQUINA MEZCLADORA-DISPERSORA"},{"cod":"JJ15312","desc":"MAQUINA MEZCLADORA-DISPERSORA (2)"}],"JA00097":[{"cod":"JJ08483","desc":"AGITADOR"}],"JA00098":[{"cod":"JJ09948","desc":"MAQUINA MEZCLADORA"},{"cod":"JJ10085","desc":"BATCH"}],"JA00099":[{"cod":"JJ00288","desc":"MAQUINA MEZCLADORA"},{"cod":"JJ06269","desc":"CERNEDOR CENTRIFUGO"},{"cod":"JJ11815","desc":"SILO 1"},{"cod":"JJ11816","desc":"SILO 2"},{"cod":"JJ14740","desc":"ROMPEDORA DE BOLSAS"},{"cod":"JJ14741","desc":"CERNEDOR CENTRIFUGO (2)"},{"cod":"JJ14748","desc":"DESCARGADOR DE BIG BAG"},{"cod":"JJ14749","desc":"SISTEMA DE PESAJE SILO 1"},{"cod":"JJ14750","desc":"SISTEMA DE PESAJE SILO 2"},{"cod":"JJ14760","desc":"TOLVA (YESO)"},{"cod":"JJ14761","desc":"TOLVA (CEMENTO)"},{"cod":"JJ14762","desc":"TOLVA PULMON (MEZCLADO)"},{"cod":"JJ14763","desc":"SISTEMA DE PESAJE YESO"},{"cod":"JJ14764","desc":"SISTEMA DE PESAJE CEMENTO"},{"cod":"JJ14765","desc":"FILTRO DE MANGA 1"},{"cod":"JJ14766","desc":"FILTRO DE MANGA 2"},{"cod":"JJ14767","desc":"FILTRO DE MANGA 3"}],"JA00100":[{"cod":"JJ50198","desc":"BATCH"},{"cod":"JJ50423","desc":"AGITADOR GRANDE"},{"cod":"JJ50615","desc":"BATCH (2)"}],"JA00101":[{"cod":"JJ10797","desc":"TANQUE"}],"JA00102":[{"cod":"JJ00251","desc":"AGITADOR DE TAMBORES"}],"JA00103":[{"cod":"JJ50889","desc":"BATCH"}],"JA00104":[{"cod":"JJ08670","desc":"MEZCLADORA DOBLE Z"}],"JA00105":[{"cod":"JJ13064","desc":"TANQUE MEZCLADO - VOLIGOMA-"}],"JA00106":[{"cod":"JJ11786","desc":"IMPREGNADOR"},{"cod":"JJ15193","desc":"ENSAMBLADORA - PICO Y TAPA ECCOLE-"}],"JA00107":[{"cod":"JJ15325","desc":"DOSIFICADOR DE PARAFINA"}],"JA00124":[{"cod":"JJ10054","desc":"ENGANCHADORA-LINEAPOXIRAN/UNIPOX-"},{"cod":"JJ10436","desc":"ENVOLVEDORA-LINEA POXIRAN/UNIPOX-"},{"cod":"JJ10767","desc":"FRACCIONADORA-LINEA POXIRAN-"},{"cod":"JJ11588","desc":"FRACCIONADORA-LINEA UNIPOX SIMPLE-"},{"cod":"JJ12460","desc":"DISPOSITIVO COLOCADOR DE ESPATULAS"},{"cod":"JJ12799","desc":"ESTUCHADORA-LINEA POXIRAN/FASTIX-"},{"cod":"JJ50633","desc":"HORNO -LINEA POXIRAN-UNIPOX-"}],"JA00125":[{"cod":"JJ60277","desc":"HORNO"},{"cod":"JJ60278","desc":"LAMINADOR"}],"JA00126":[{"cod":"JJ60279","desc":"LAMINADOR"}],"JA00128":[{"cod":"JJ14155","desc":"ELEVADOR DE TAMBORES"}]};
+
+const LINEAS = {"JA00041":"LINEA EMPAQUE LA GOTITA N° 1","JA00042":"LINEA FRACC. Y EMP. GOTITA GEL + 10ML","JA00043":"LINEA FRACC. Y EMP. POXIPOL 14","JA00044":"LINEA EMPAQUE POXIPOL 70 Y POXILINA 250","JA00045":"LINEA FRACC. POMOS POXIRAN","JA00046":"LINEA FRACC. UNIPOX","JA00047":"LINEA EMPAQUE POXIRAN/UNIPOX 25","JA00048":"LINEA EMPAQUE UNIPOX/FASTIX/POXIRAN","JA00049":"LINEA FRACC. Y EMP. LATAS","JA00051":"LINEA FRACC. Y EMP. CARTUCHOS","JA00052":"LINEA EMPAQUE FASTIX 25","JA00053":"LINEA ENS. PICO Y TAPA LA GOTITA","JA00054":"LINEA FRACC. LA GOTITA N° 1 (IWK5)","JA00055":"LINEA FRACC. LA GOTITA N° 2 (IWK6)","JA00057":"LINEA FRACC. LA GOTITA 10 ML","JA00058":"LINEA ETIQUETADO LA GOTITA 10 ML","JA00059":"LINEA ENS. TAPA RETEN VOLIGOMA","JA00060":"LINEA FRACC. Y EMP. VOLIGOMA DUAL","JA00062":"LINEA FRACC. Y EMP. POXILINA","JA00063":"LINEA FRACC. POXIMIX 0,5 KG","JA00064":"LINEA FRACC. Y EMP. POXIMIX 1,25 KG","JA00065":"LINEA FRACC. PULPITO","JA00066":"LINEA ADHESIVADO POXITAS","JA00067":"LINEA DE TROQUELADO DE POXITAS","JA00068":"LINEA EMPAQUE BLISTER DOBLE","JA00069":"LINEA EMPAQUE BLISTER SIMPLE","JA00070":"LINEA FRACC. POXIPOL 70","JA00080":"LINEA FRACC. Y EMP. POXIMIX 5KG/3KG","JA00081":"LINEA DE FRACC. VOLIGOMA 50","JA00086":"LINEA FRACC. Y EMP. VOLIGOMA CAPMATIC","JA00087":"EQUIPOS COMPLEMENTARIOS LINEA 9","JA00089":"FRACCIONADORA UNIPOX DOBLE","JA00091":"LINEA FRACC. Y EMP. DE ECCOLE","JA00092":"LINEA EMPAQUE LA GOTITA N° 2","JA00093":"PROCESO ACTIVADO CIANOCRILATO","JA00094":"PROCESO MEZCLADO ADHESIVOS/POXIRAN","JA00095":"PROCESO MEZCLADO DE PULPITO","JA00096":"PROCESO MEZCLADO ECCOLE/GOTITA GEL","JA00097":"PROCESO MEZCLADO RESINA POXIRAN","JA00098":"PROCESO MEZCLADO PLASTISOL/POXIPOL","JA00099":"PROCESO MEZCLADO POXIMIX INT./EXT.","JA00100":"PROCESO MEZCLADO POXIPOL/PLASTISOL","JA00101":"PROCESO MEZCLADO UNIPOX","JA00102":"PROCESO PRE MEZCLADO MOLIENDA POXILINA","JA00103":"PROCESO MEZCLADO SOL. LUBR. LA GOTITA","JA00104":"PROCESO MEZCLADO POXILINA/HOTMELT","JA00105":"PROCESO MEZCLADO VOLIGOMA","JA00106":"LUBRICADO Y ENS. TAPA ECCOLE","JA00107":"DOSIFICADOR DE PARAFINA","JA00124":"LINEA FRACC. Y EMP. POXIRAN/UNIPOX","JA00125":"HORNO Y LAMINADOR","JA00126":"LAMINADOR","JA00128":"MEZCLADO PLASTICOLA","JA00129":"LINEA FRACC. Y EMP. LA GOTITA-CAM","JA00130":"LINEA FRACC. Y EMP. ECCOLE-ROMACO","JA00131":"LINEA FRACC. Y EMP. POXIPOL 14-ROMACO","JA00132":"LINEA FRACC. Y EMP. POXILINA 2","JA00133":"LINEA FRACC. GOTITA-IWK4"};
+
+const TECNICOS = [{"legajo":"ZZ03233","iniciales":"AFQ","apellido":"RUIZ AQUINO","nombre":"ALBERTO FEDERICO"},{"legajo":"ZZ03253","iniciales":"BEC","apellido":"BERTANI","nombre":"CHRISTIAN ALBERTO"},{"legajo":"ZZ03396","iniciales":"BEE","apellido":"BARREYRO","nombre":"EMILIANO EZEQUIEL"},{"legajo":"ZZ02893","iniciales":"DFG","apellido":"DEANDREA","nombre":"FABIAN GUILLERMO"},{"legajo":"ZZ02835","iniciales":"DMZ","apellido":"MANSILO ZANON","nombre":"DIEGO HERNAN"},{"legajo":"ZZ02981","iniciales":"GPA","apellido":"GONZALEZ","nombre":"PASCUAL ADRIAN"},{"legajo":"ZZ03391","iniciales":"JIS","apellido":"ISNARDO","nombre":"JAVIER RAUL MATIAS"},{"legajo":"ZZ02753","iniciales":"LJM","apellido":"MORALES","nombre":"LUIS JAVIER"},{"legajo":"ZZ02522","iniciales":"LRM","apellido":"LUJAN","nombre":"RAMON MANUEL AVELINO"},{"legajo":"ZZ02832","iniciales":"MJL","apellido":"LUNA","nombre":"MARIANO JAVIER"},{"legajo":"ZZ02620","iniciales":"MRB","apellido":"BRUSA","nombre":"MARCELO ADRIAN"},{"legajo":"ZZ02400","iniciales":"OEF","apellido":"FERNANDEZ","nombre":"JORGE ERNESTO"},{"legajo":"ZZ02390","iniciales":"REG","apellido":"GRASSO","nombre":"MARIANO EDUARDO"},{"legajo":"ZZ01400","iniciales":"REM","apellido":"MARTINEZ","nombre":"RUBEN ERNESTO"},{"legajo":"ZZ01268","iniciales":"DOP","apellido":"PEREZ","nombre":"DANIEL OSVALDO"},{"legajo":"ZZ03072","iniciales":"LBR","apellido":"REYN","nombre":"LUCIANO BENJAMIN"},{"legajo":"ZZ03359","iniciales":"MTF","apellido":"CORONEL","nombre":"MATÍAS RODOLFO"},{"legajo":"ZZ01604","iniciales":"OEI","apellido":"IBARRA","nombre":"OMAR ENRIQUE"},{"legajo":"ZZ01120","iniciales":"PGF","apellido":"PEÑALBA","nombre":"GABRIELA FERNANDA"}];
+
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+let reportes = [];
+let editingId = null;
+
+// ── CONEXIÓN CON GOOGLE SHEETS (TIEMPO REAL) ──────────────────
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwE_QfsiezvPz9lAN7c73Ta4AeNekJvIPE_KBGIEW73pT0Qoit8hBQzuvvEQtvPajvvfg/exec';
+
+function sincronizar(action, params){
+  try{
+    var payload = Object.assign({action: action}, params);
+    fetch(APPS_SCRIPT_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload)})
+      .then(function(){ marcarSincronizado(true); })
+      .catch(function(err){ marcarSincronizado(false, err && err.message); });
+  }catch(err){
+    marcarSincronizado(false, 'Error antes de enviar: '+(err&&err.message));
+  }
+}
+function marcarSincronizado(ok, msg){
+  var el=document.getElementById('estadoSync');
+  if(!el) return;
+  el.textContent = ok ? '✓ Sincronizado '+new Date().toLocaleTimeString() : '⚠️ Error al sincronizar: '+(msg||'desconocido');
+  el.style.color = ok ? '#2e7d32' : '#c0392b';
+}
+
+function cargarDesdeSheet(callback){
+  fetch(APPS_SCRIPT_URL)
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      reportes = data.reportes || [];
+      marcarSincronizado(true);
+      if(callback) callback();
+    })
+    .catch(function(err){
+      marcarSincronizado(false, 'No se pudo conectar (GET): '+(err&&err.message));
+      if(callback) callback();
+    });
+}
+
+// ─── FORMAT TIEMPO ───────────────────────────────────────────────────────────
+function fmtTiempo(ini, fin) {
+  if (!ini || !fin) return '<span style="color:var(--muted2)">—</span>';
+  const [h1,m1] = ini.split(':').map(Number);
+  const [h2,m2] = fin.split(':').map(Number);
+  let mins = (h2*60+m2) - (h1*60+m1);
+  if (mins < 0) mins += 1440;
+  const hs  = Math.floor(mins/60);
+  const min = mins % 60;
+  return (hs>0?hs+' hs ':'') + (min>0?min+' min':'0 min');
+}
+
+// ─── TIEMPO ATENCION ─────────────────────────────────────────────────────────
+function getSemanaFromDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  // Get ISO week number
+  const startOfYear = new Date(d.getFullYear(), 0, 1);
+  const days = Math.floor((d - startOfYear) / 86400000);
+  const week = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+  return 'Sem' + String(week).padStart(2, '0');
+}
+
+function onFechaChange() {
+  const fecha = document.getElementById('f_fecha').value;
+  const semField = document.getElementById('f_semana');
+  if (fecha && !semField.dataset.manual) {
+    semField.value = getSemanaFromDate(fecha);
+  }
+}
+
+function calcTiempoAtencion() {
+  const ini = document.getElementById('f_hora_inicio').value;
+  const fin = document.getElementById('f_hora_fin').value;
+  const field = document.getElementById('tiempoAtencionField');
+  const val   = document.getElementById('tiempoAtencionVal');
+  if (!ini || !fin) { field.style.display='none'; return; }
+  const [h1,m1] = ini.split(':').map(Number);
+  const [h2,m2] = fin.split(':').map(Number);
+  let mins = (h2*60+m2) - (h1*60+m1);
+  if (mins < 0) mins += 1440;
+  const hs  = Math.floor(mins/60);
+  const min = mins % 60;
+  field.style.display = 'block';
+  val.textContent = (hs > 0 ? hs + ' hs ' : '') + (min > 0 ? min + ' min' : '') || '0 min';
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init() {
+  // Populate línea select
+  const sel = document.getElementById('f_linea');
+  Object.entries(LINEAS).forEach(([cod, desc]) => {
+    const o = document.createElement('option');
+    o.value = cod;
+    o.textContent = `${cod} — ${desc}`;
+    sel.appendChild(o);
+  });
+  // Populate técnico select
+  const tsel = document.getElementById('f_tecnico');
+  const tsel2 = document.getElementById('f_tecnico2');
+  TECNICOS.forEach(t => {
+    const o = document.createElement('option');
+    o.value = t.legajo;
+    o.textContent = `${t.apellido}, ${t.nombre} (${t.iniciales})`;
+    tsel.appendChild(o);
+    const o2 = document.createElement('option');
+    o2.value = t.legajo;
+    o2.textContent = `${t.apellido}, ${t.nombre} (${t.iniciales})`;
+    tsel2.appendChild(o2);
+  });
+  // Populate filter linea
+  const fsel = document.getElementById('filt_linea');
+  Object.entries(LINEAS).forEach(([cod, desc]) => {
+    const o = document.createElement('option');
+    o.value = cod;
+    o.textContent = `${cod} — ${desc}`;
+    fsel.appendChild(o);
+  });
+  // Set today's date
+  document.getElementById('f_fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('f_semana').dataset.manual = '';
+  document.getElementById('f_semana').value = '';
+  updateHistCount();
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+// ── PIN SUPERVISOR ──
+
+function switchTab(name) {
+  ['nuevo','historial','pendientes','repuestos'].forEach(n => {
+    var btn = document.getElementById('tab-btn-'+n);
+    var tab = document.getElementById('tab-'+n);
+    if(btn) btn.classList.toggle('active', n===name);
+    if(tab) tab.classList.toggle('active', n===name);
+  });
+  if (name==='historial') renderHistorial();
+  if (name==='pendientes') renderPendientes();
+  if (name==='repuestos') renderRepuestos();
+}
+
+// ─── EQUIPOS ──────────────────────────────────────────────────────────────────
+// ── BUSCADOR DE LÍNEAS ──
+function filtrarLineas() {
+  var val = document.getElementById('f_linea_input').value.trim().toUpperCase();
+  var sugg = document.getElementById('linea_sugg');
+  document.getElementById('f_linea').value = '';
+  sugg.innerHTML = '';
+  sugg.style.display = 'none';
+  if(val.length < 2) return;
+  var matches = Object.entries(LINEAS).filter(function(e){
+    return e[0].indexOf(val) !== -1 || e[1].toUpperCase().indexOf(val) !== -1;
+  }).slice(0, 10);
+  if(!matches.length) return;
+  matches.forEach(function(e){
+    var div = document.createElement('div');
+    div.style.cssText = 'padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;line-height:1.4';
+    div.innerHTML = '<span style="font-family:Space Mono,monospace;font-size:11px;color:var(--accent)">'+e[0]+'</span> '+e[1];
+    div.addEventListener('mousedown', (function(cod, desc){
+      return function(){
+        document.getElementById('f_linea_input').value = cod + ' — ' + desc;
+        document.getElementById('f_linea').value = cod;
+        sugg.style.display = 'none';
+        loadEquipos();
+      };
+    })(e[0], e[1]));
+    sugg.appendChild(div);
+  });
+  sugg.style.display = 'block';
+}
+
+function ocultarSugerencias(){
+  setTimeout(function(){ document.getElementById('linea_sugg').style.display='none'; }, 200);
+}
+
+// ── EQUIPO MANUAL ──
+function onEquipoChange(){
+  var sel = document.getElementById('f_equipo');
+  var manual = document.getElementById('f_equipo_manual');
+  if(sel.value === '__manual__'){
+    manual.style.display = 'block';
+    document.getElementById('f_cod_equipo').value = 'S/JJ';
+    manual.focus();
+  } else {
+    manual.style.display = 'none';
+    var opt = sel.selectedOptions[0];
+    document.getElementById('f_cod_equipo').value = opt?.dataset.cod || '';
+  }
+}
+
+// ── BACKUP JSON ──
+
+function guardarBackup(){
+  var datos = JSON.stringify({reportes: reportes, fecha: new Date().toISOString()}, null, 2);
+  var blob = new Blob([datos], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'backup_fallas_' + new Date().toLocaleDateString('es-AR').replace(/\//g,'-') + '.json';
+  a.click();
+}
+
+function cargarBackup(input){
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var data = JSON.parse(e.target.result);
+      if(data.reportes && Array.isArray(data.reportes)){
+        if(!confirm('¿Cargar backup? Se reemplazarán los datos actuales ('+reportes.length+' registros) por los del backup ('+data.reportes.length+' registros).')) return;
+        var idsExistentes = reportes.map(function(r){return r.id;});
+        data.reportes.forEach(function(r){
+          var accion = idsExistentes.indexOf(r.id)>=0 ? 'editar' : 'nuevo';
+          sincronizar(accion, r);
+        });
+        reportes = data.reportes;
+        renderHistorial();
+        updateHistCount();
+        alert('✓ Backup cargado y sincronizado: ' + data.reportes.length + ' registros');
+      } else {
+        alert('El archivo no tiene el formato correcto');
+      }
+    }catch(err){
+      alert('Error al leer el archivo: ' + err.message);
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function loadEquipos() {
+  const linea = document.getElementById('f_linea').value;
+  const esel = document.getElementById('f_equipo');
+  const manual = document.getElementById('f_equipo_manual');
+  esel.innerHTML = '<option value="">— Seleccionar equipo —</option>';
+  document.getElementById('f_cod_equipo').value = '';
+  manual.style.display = 'none';
+
+  if (!linea) { esel.disabled = true; return; }
+
+  // Si la línea no tiene equipos → habilitar escritura directa
+  if (!EQUIPOS[linea] || EQUIPOS[linea].length === 0) {
+    esel.innerHTML = '<option value="__manual__">✏️ Sin equipos registrados — escribir manualmente</option>';
+    esel.disabled = false;
+    manual.style.display = 'block';
+    document.getElementById('f_cod_equipo').value = 'S/JJ';
+    manual.focus();
+    return;
+  }
+
+  // Línea con equipos: cargar opciones + opción manual al final
+  esel.disabled = false;
+  EQUIPOS[linea].forEach(eq => {
+    const o = document.createElement('option');
+    o.value = eq.desc;
+    o.dataset.cod = eq.cod;
+    o.textContent = `${eq.cod} — ${eq.desc}`;
+    esel.appendChild(o);
+  });
+  const oManual = document.createElement('option');
+  oManual.value = '__manual__';
+  oManual.textContent = '✏️ Escribir manualmente...';
+  esel.appendChild(oManual);
+
+  esel.onchange = () => { onEquipoChange(); };
+}
+
+// ─── FORM ─────────────────────────────────────────────────────────────────────
+function onTipoFallaChange(){
+  const checks = Array.from(document.querySelectorAll('input[name=tipo_falla]:checked'));
+  if(checks.length > 2){
+    checks[0].checked = false;
+    showToast('⚠️ Máximo 2 orígenes seleccionables', 'error');
+  }
+}
+
+function onTecnicoChange(){
+  const t2 = document.getElementById('f_tecnico2').value;
+  const t1 = document.getElementById('f_tecnico').value;
+  const fieldAcc2 = document.getElementById('field_acciones2');
+  const fieldObs2 = document.getElementById('field_obs2');
+  const lbl1Acc = document.getElementById('lbl_acciones1');
+  const lbl1Obs = document.getElementById('lbl_obs1');
+  const lbl2Acc = document.getElementById('lbl_acciones2');
+  const lbl2Obs = document.getElementById('lbl_obs2');
+
+  if(t2){
+    fieldAcc2.style.display = '';
+    fieldObs2.style.display = '';
+    const nom1 = t1 ? (TECNICOS.find(x=>x.legajo===t1)?.apellido || '') : 'Técnico 1';
+    const nom2 = TECNICOS.find(x=>x.legajo===t2)?.apellido || 'Técnico 2';
+    lbl1Acc.textContent = 'Acciones tomadas / correctivas — ' + nom1;
+    lbl1Obs.textContent = 'Observaciones adicionales — ' + nom1;
+    lbl2Acc.textContent = 'Acciones tomadas / correctivas — ' + nom2;
+    lbl2Obs.textContent = 'Observaciones adicionales — ' + nom2;
+  } else {
+    fieldAcc2.style.display = 'none';
+    fieldObs2.style.display = 'none';
+    lbl1Acc.textContent = 'Acciones tomadas / correctivas';
+    lbl1Obs.textContent = 'Observaciones adicionales';
+  }
+}
+
+function resetForm() {
+  editingId = null;
+  document.getElementById('f_fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('f_semana').dataset.manual = '';
+  document.getElementById('f_semana').value = '';
+  document.getElementById('f_hora_inicio').value = '';
+  document.getElementById('f_hora_fin').value = '';
+  document.getElementById('tiempoAtencionField').style.display = 'none';
+  document.getElementById('tiempoAtencionVal').textContent = '—';
+  document.getElementById('f_sector').value = '';
+  // Limpiar buscador de línea
+  var linInp = document.getElementById('f_linea_input');
+  if(linInp) linInp.value = '';
+  document.getElementById('f_linea').value = '';
+  document.getElementById('f_equipo').innerHTML = '<option value="">— Seleccionar equipo —</option><option value="__manual__">✏️ Escribir manualmente...</option>';
+  document.getElementById('f_equipo').disabled = true;
+  var manualInp = document.getElementById('f_equipo_manual');
+  if(manualInp){ manualInp.style.display = 'none'; manualInp.value = ''; }
+  document.getElementById('f_cod_equipo').value = '';
+  // Limpiar todos los checkboxes de origen
+  document.querySelectorAll('input[name=tipo_falla]').forEach(function(r){ r.checked = false; });
+  document.getElementById('f_descripcion').value = '';
+  document.getElementById('f_componente').value = '';
+  ['pq1','pq2','pq3','pq4','pq5'].forEach(function(id){ document.getElementById(id).value = ''; });
+  // Limpiar todas las causas raíz (hasta cr9)
+  ['cr1','cr2','cr3','cr4','cr5','cr6','cr7','cr8','cr9'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.checked = false;
+  });
+  document.getElementById('f_tecnico').value = '';
+  document.getElementById('f_tecnico2').value = '';
+  document.getElementById('field_acciones2').style.display = 'none';
+  document.getElementById('field_obs2').style.display = 'none';
+  document.getElementById('lbl_acciones1').textContent = 'Acciones tomadas / correctivas';
+  document.getElementById('lbl_obs1').textContent = 'Observaciones adicionales';
+  document.getElementById('f_acciones').value = '';
+  document.getElementById('f_obs').value = '';
+  document.getElementById('f_acciones2').value = '';
+  document.getElementById('f_obs2').value = '';
+  document.getElementById('f_estado').value = 'En proceso';
+}
+
+function getVal(id) { return document.getElementById(id).value.trim(); }
+
+function mostrarAvisoGuardado(callback){
+  var mes = new Date().toLocaleDateString('es-AR', {month:'2-digit', year:'numeric'}).replace('/', '-');
+  var carpeta = 'Y:\\Mantenimiento\\REPORTES DE MANTENIMIENTOS\\' + mes;
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center';
+  d.innerHTML =
+    '<div style="background:#fff;border-radius:14px;padding:24px;width:400px;max-width:95vw">'+
+      '<div style="font-size:22px;margin-bottom:8px;text-align:center">&#128229;</div>'+
+      '<div style="font-size:15px;font-weight:800;text-align:center;margin-bottom:12px">Se va a descargar el Excel</div>'+
+      '<div style="background:#f0ede8;border-radius:8px;padding:12px 14px;margin-bottom:16px">'+
+        '<div style="font-size:11px;font-weight:700;color:#7a7570;text-transform:uppercase;margin-bottom:6px">Guardar en esta carpeta:</div>'+
+        '<div style="font-family:Space Mono,monospace;font-size:12px;font-weight:700;color:#c45c1a;word-break:break-all">'+carpeta+'</div>'+
+      '</div>'+
+      '<div style="font-size:12px;color:#7a7570;margin-bottom:16px;line-height:1.5">'+
+        'Cuando el navegador pregunte d&#243;nde guardar, navig&#225; a esa carpeta y hace click en <strong>Guardar</strong>.'+
+      '</div>'+
+      '<button id="btnDescOk" style="width:100%;padding:12px;background:#2e7d32;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Entendido — descargar ahora</button>'+
+    '</div>';
+  document.body.appendChild(d);
+  document.getElementById('btnDescOk').onclick = function(){
+    d.remove();
+    callback();
+  };
+}
+
+function descargarExcelIndividual(reporte){
+  const headers = ['ID','Fecha','Hora Inicio','Hora Fin','Semana','Sector',
+    'Código Línea','Línea','Código Equipo','Equipo',
+    'Tipo de Falla','Descripción del Problema','Componente que Falló',
+    'Por Qué 1','Por Qué 2','Por Qué 3','Por Qué 4','Por Qué 5',
+    'Causas Raíz','Técnico 1','Legajo 1','Técnico 2','Legajo 2','Estado',
+    'Acciones Técnico 1','Observaciones Técnico 1','Acciones Técnico 2','Observaciones Técnico 2'];
+
+  const row = [
+    reporte.id, reporte.fecha, reporte.hora_inicio||'', reporte.hora_fin||'', reporte.semana||'', reporte.sector||'',
+    reporte.linea, reporte.linea_desc, reporte.cod_equipo, reporte.equipo,
+    reporte.tipo_falla, reporte.descripcion, reporte.componente||'',
+    reporte.porques[0]||'', reporte.porques[1]||'', reporte.porques[2]||'', reporte.porques[3]||'', reporte.porques[4]||'',
+    reporte.causas.join(', '), reporte.tecnico_nombre, reporte.tecnico_legajo,
+    reporte.tecnico2_nombre||'', reporte.tecnico2_legajo||'', reporte.estado,
+    reporte.acciones||'', reporte.obs||'', reporte.acciones2||'', reporte.obs2||''
+  ];
+
+  const wsData = [headers, row];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const colWidths = [8,12,10,10,8,14,10,32,10,32,16,40,20,30,30,30,30,30,30,22,10,22,10,18,35,30,35,30];
+  ws['!cols'] = colWidths.map(w => ({wch: w}));
+  ws['!freeze'] = {xSplit:0, ySplit:1};
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Reporte de Falla');
+
+  // Nombre del archivo: Falla_AAAA-MM-DD_HH-MM_Apellido_Nombre.xlsx
+  const ahora = new Date();
+  const hh = String(ahora.getHours()).padStart(2,'0');
+  const mm = String(ahora.getMinutes()).padStart(2,'0');
+  const nombreTecnico = (reporte.tecnico_nombre || 'SinTecnico')
+    .replace(/,/g,'')
+    .replace(/\s+/g,'_')
+    .replace(/[^a-zA-Z0-9_]/g,'');
+  const fileName = `Falla_${reporte.fecha}_${hh}-${mm}_${nombreTecnico}.xlsx`;
+
+  XLSX.writeFile(wb, fileName);
+}
+
+function guardarReporte() {
+  const fecha = getVal('f_fecha');
+  const linea = getVal('f_linea');
+  const equipo = getVal('f_equipo');
+  const tiposSeleccionados = Array.from(document.querySelectorAll('input[name=tipo_falla]:checked')).map(c => c.value);
+  const tipo = tiposSeleccionados.join(' + ');
+  const desc = getVal('f_descripcion');
+  const tecnico = getVal('f_tecnico');
+  const tecnico2 = getVal('f_tecnico2');
+
+  if (!fecha || !linea || !equipo || !tiposSeleccionados.length || !desc || !tecnico) {
+    showToast('⚠️ Completá los campos obligatorios', 'error'); return;
+  }
+
+  const causas = ['cr1','cr2','cr3','cr4','cr5','cr6','cr7']
+    .filter(id => document.getElementById(id).checked)
+    .map(id => document.getElementById(id).value);
+
+  const tecData = TECNICOS.find(t => t.legajo === tecnico);
+  const tecData2 = tecnico2 ? TECNICOS.find(t => t.legajo === tecnico2) : null;
+
+  const reporte = {
+    id: editingId || Date.now(),
+    fecha,
+    hora_inicio: getVal('f_hora_inicio'),
+    hora_fin: getVal('f_hora_fin'),
+    sector: getVal('f_sector'),
+    semana: getVal('f_semana'),
+    linea,
+    linea_desc: LINEAS[linea] || linea,
+    equipo,
+    cod_equipo: getVal('f_cod_equipo'),
+    tipo_falla: tipo,
+    tipos_falla: tiposSeleccionados,
+    descripcion: desc,
+    componente: getVal('f_componente'),
+    porques: [getVal('pq1'),getVal('pq2'),getVal('pq3'),getVal('pq4'),getVal('pq5')].filter(Boolean),
+    causas,
+    tecnico_legajo: tecnico,
+    tecnico_nombre: tecData ? `${tecData.apellido}, ${tecData.nombre}` : tecnico,
+    tecnico_iniciales: tecData?.iniciales || '',
+    tecnico2_legajo: tecnico2 || '',
+    tecnico2_nombre: tecData2 ? `${tecData2.apellido}, ${tecData2.nombre}` : '',
+    estado: getVal('f_estado'),
+    acciones: getVal('f_acciones'),
+    obs: getVal('f_obs'),
+    acciones2: getVal('f_acciones2'),
+    obs2: getVal('f_obs2'),
+    created_at: editingId ? reportes.find(r=>r.id===editingId)?.created_at : new Date().toISOString(),
+  };
+
+  if (editingId) {
+    const idx = reportes.findIndex(r=>r.id===editingId);
+    reportes[idx] = reporte;
+    showToast('✅ Reporte actualizado');
+    sincronizar('editar', reporte);
+  } else {
+    reportes.unshift(reporte);
+    var estadosFinales = ['Resuelto definitivo', 'Resuelto provisorio'];
+    if(estadosFinales.indexOf(reporte.estado) !== -1){
+      showToast('✅ Reporte guardado');
+      mostrarAvisoGuardado(function(){ descargarExcelIndividual(reporte); });
+    } else {
+      showToast('✅ Reporte guardado — ' + reporte.estado);
+    }
+    sincronizar('nuevo', reporte);
+  }
+
+  updateHistCount();
+  resetForm();
+  switchTab('nuevo');
+}
+
+// ─── HISTORIAL ────────────────────────────────────────────────────────────────
+function renderRepuestos() {
+  var body = document.getElementById('repuestosBody');
+  var reps = reportes.filter(function(r){ return r.estado === 'Pendiente repuesto'; });
+
+  if(!reps.length){
+    body.innerHTML = '<div style="text-align:center;padding:48px;color:var(--muted)"><div style="font-size:36px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:700">Sin trabajos pendientes por repuesto</div></div>';
+    return;
+  }
+
+  body.innerHTML = '<div style="padding:4px 0 14px;font-size:13px;color:var(--muted)">'+reps.length+' trabajo(s) pendiente(s) por repuesto</div>' +
+  reps.map(function(r){
+    var tecOpts = TECNICOS.map(function(t){ return '<option value="'+t.legajo+'">'+t.apellido+', '+t.nombre+'</option>'; }).join('');
+    return '<div style="background:var(--surface2);border:1px solid var(--border);border-left:4px solid #2a6496;border-radius:10px;padding:16px;margin-bottom:12px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px">'+
+        '<div>'+
+          '<div style="font-family:Space Mono,monospace;font-size:11px;color:var(--accent);margin-bottom:4px">'+r.linea+' · '+r.fecha+'</div>'+
+          '<div style="font-size:14px;font-weight:700">'+r.equipo+'</div>'+
+          '<div style="font-size:12px;color:var(--muted);margin-top:2px">'+r.tipo_falla+' · '+r.tecnico_nombre+'</div>'+
+        '</div>'+
+        '<span style="background:#d6eaf8;color:#2a6496;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700">🔩 Pendiente repuesto</span>'+
+      '</div>'+
+      (r.descripcion?'<div style="font-size:12px;color:var(--text);margin-bottom:8px;padding:8px;background:var(--surface);border-radius:6px">'+r.descripcion+'</div>':'')+
+      (r.acciones?'<div style="font-size:12px;color:var(--muted);margin-bottom:10px"><strong>Acciones previas:</strong> '+r.acciones+'</div>':'')+
+      '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">'+
+        '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Cerrar trabajo — Repuesto recibido</div>'+
+        '<div style="margin-bottom:10px">'+
+          '<label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Técnico que resolvió <span style="color:red">*</span></label>'+
+          '<select id="rep_tec_'+r.id+'" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;font-family:Inter,sans-serif">'+
+            '<option value="">— Seleccionar técnico —</option>'+tecOpts+
+          '</select>'+
+        '</div>'+
+        '<div style="margin-bottom:10px">'+
+          '<label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Repuesto utilizado</label>'+
+          '<input type="text" id="rep_rep_'+r.id+'" placeholder="Ej: Rodamiento 6205, correa B45..." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;font-family:Inter,sans-serif">'+
+        '</div>'+
+        '<div style="margin-bottom:10px">'+
+          '<label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Acciones realizadas</label>'+
+          '<textarea id="rep_acc_'+r.id+'" rows="2" placeholder="Describir qué se hizo para resolver el trabajo..." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;font-family:Inter,sans-serif;resize:vertical"></textarea>'+
+        '</div>'+
+        '<div style="margin-bottom:12px">'+
+          '<label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Observaciones adicionales</label>'+
+          '<textarea id="rep_obs_'+r.id+'" rows="2" placeholder="Cualquier dato adicional relevante..." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;font-family:Inter,sans-serif;resize:vertical"></textarea>'+
+        '</div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+          '<button onclick="finalizarRepuesto('+r.id+',1)" style="background:#2e7d32;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer">&#9989; Resuelto definitivo</button>'+
+          '<button onclick="finalizarRepuesto('+r.id+',2)" style="background:#c07848;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer">&#9888; Resuelto provisorio</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function finalizarRepuesto(id, tipoEstado){
+  var nuevoEstado = tipoEstado===1 ? 'Resuelto definitivo' : 'Resuelto provisorio';
+  var r = reportes.find(function(x){ return x.id===id; });
+  if(!r) return;
+
+  var selTec = document.getElementById('rep_tec_'+id);
+  if(!selTec || !selTec.value){
+    showToast('⚠️ Seleccioná el técnico que resolvió el trabajo', 'error');
+    return;
+  }
+  var tecData = TECNICOS.find(function(t){ return t.legajo===selTec.value; });
+  r.tecnico2_legajo = selTec.value;
+  r.tecnico2_nombre = tecData ? tecData.apellido+', '+tecData.nombre : selTec.value;
+
+  var repuesto = document.getElementById('rep_rep_'+id);
+  var acc = document.getElementById('rep_acc_'+id);
+  var obs = document.getElementById('rep_obs_'+id);
+  if(repuesto && repuesto.value.trim()) r.obs2 = 'Repuesto: '+repuesto.value.trim()+(r.obs2?' | '+r.obs2:'');
+  if(acc && acc.value.trim()) r.acciones2 = acc.value.trim();
+  if(obs && obs.value.trim()) r.obs2 = (r.obs2?r.obs2+' | ':'')+obs.value.trim();
+
+  r.estado = nuevoEstado;
+  updateHistCount();
+  renderRepuestos();
+  showToast('✓ Trabajo finalizado — descargando Excel...');
+  descargarExcelIndividual(r);
+  sincronizar('actualizarEstado', {id:r.id, estado:r.estado, tecnico2_legajo:r.tecnico2_legajo, tecnico2_nombre:r.tecnico2_nombre, acciones2:r.acciones2||'', obs2:r.obs2||''});
+}
+
+function renderPendientes() {
+  var body = document.getElementById('pendientesBody');
+  var pends = reportes.filter(function(r){ return r.estado === 'Continuar en próximo turno'; });
+
+  if(!pends.length){
+    body.innerHTML = '<div style="text-align:center;padding:48px;color:var(--muted)"><div style="font-size:36px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:700">Sin trabajos pendientes</div><div style="font-size:12px;margin-top:6px">Todos los trabajos están finalizados</div></div>';
+    return;
+  }
+
+  body.innerHTML = '<div style="padding:4px 0 14px;font-size:13px;color:var(--muted)">'+pends.length+' trabajo(s) pendiente(s) de finalizar</div>' +
+  pends.map(function(r){
+    return '<div style="background:var(--surface2);border:1px solid var(--border);border-left:4px solid #f59e0b;border-radius:10px;padding:16px;margin-bottom:12px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px">'+
+        '<div>'+
+          '<div style="font-family:Space Mono,monospace;font-size:11px;color:var(--accent);margin-bottom:4px">'+r.linea+' · '+r.fecha+'</div>'+
+          '<div style="font-size:14px;font-weight:700">'+r.equipo+'</div>'+
+          '<div style="font-size:12px;color:var(--muted);margin-top:2px">'+r.tipo_falla+' · '+r.tecnico_nombre+'</div>'+
+        '</div>'+
+        '<span style="background:#fff3cd;color:#856404;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700">🕐 Pendiente</span>'+
+      '</div>'+
+      (r.descripcion?'<div style="font-size:12px;color:var(--text);margin-bottom:10px;padding:8px;background:var(--surface);border-radius:6px">'+r.descripcion+'</div>':'')+
+      (r.acciones?'<div style="font-size:12px;color:var(--muted);margin-bottom:10px"><strong>Acciones previas:</strong> '+r.acciones+'</div>':'')+
+      '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">'+
+        '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Finalizar este trabajo — Turno tarde</div>'+
+        '<div style="margin-bottom:10px">'+
+          '<label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Técnico que continuó <span style="color:red">*</span></label>'+
+          '<select id="cont_tec_'+r.id+'" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;font-family:Inter,sans-serif">'+
+            '<option value="">— Seleccionar técnico —</option>'+
+            TECNICOS.map(function(t){ return '<option value="'+t.legajo+'">'+t.apellido+', '+t.nombre+'</option>'; }).join('')+
+          '</select>'+
+        '</div>'+
+        '<div style="margin-bottom:10px">'+
+          '<label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Acciones realizadas</label>'+
+          '<textarea id="cont_acc_'+r.id+'" rows="2" placeholder="Describir qué se hizo para finalizar el trabajo..." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;font-family:Inter,sans-serif;resize:vertical"></textarea>'+
+        '</div>'+
+        '<div style="margin-bottom:12px">'+
+          '<label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Observaciones adicionales</label>'+
+          '<textarea id="cont_obs_'+r.id+'" rows="2" placeholder="Cualquier dato adicional relevante..." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;font-family:Inter,sans-serif;resize:vertical"></textarea>'+
+        '</div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+          '<button onclick="finalizarPendiente('+r.id+',1)" style="background:#2e7d32;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer">&#9989; Resuelto definitivo</button>'+
+          '<button onclick="finalizarPendiente('+r.id+',2)" style="background:#c07848;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer">&#9888; Resuelto provisorio</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function finalizarPendiente(id, tipoEstado){
+  var nuevoEstado = tipoEstado===1 ? 'Resuelto definitivo' : 'Resuelto provisorio';
+  var r = reportes.find(function(x){ return x.id===id; });
+  if(!r) return;
+
+  // Técnico que continuó
+  var selTec = document.getElementById('cont_tec_'+id);
+  if(!selTec || !selTec.value){
+    showToast('⚠️ Seleccioná el técnico que continuó el trabajo', 'error');
+    return;
+  }
+  var tecData = TECNICOS.find(function(t){ return t.legajo===selTec.value; });
+  r.tecnico2_legajo = selTec.value;
+  r.tecnico2_nombre = tecData ? tecData.apellido+', '+tecData.nombre : selTec.value;
+
+  // Acciones y observaciones del turno tarde
+  var acc = document.getElementById('cont_acc_'+id);
+  var obs = document.getElementById('cont_obs_'+id);
+  if(acc && acc.value.trim()) r.acciones2 = acc.value.trim();
+  if(obs && obs.value.trim()) r.obs2 = obs.value.trim();
+
+  r.estado = nuevoEstado;
+  updateHistCount();
+  renderPendientes();
+  showToast('✓ Trabajo finalizado');
+  mostrarAvisoGuardado(function(){ descargarExcelIndividual(r); });
+  sincronizar('actualizarEstado', {id:r.id, estado:r.estado, tecnico2_legajo:r.tecnico2_legajo, tecnico2_nombre:r.tecnico2_nombre, acciones2:r.acciones2||'', obs2:r.obs2||''});
+}
+
+function renderHistorial() {
+  const busca = document.getElementById('filt_busca').value.toLowerCase();
+  const tipo = document.getElementById('filt_tipo').value;
+  const estado = document.getElementById('filt_estado').value;
+  const linea = document.getElementById('filt_linea').value;
+
+  let filtered = reportes.filter(r => {
+    if (tipo && r.tipo_falla !== tipo) return false;
+    if (estado && r.estado !== estado) return false;
+    if (linea && r.linea !== linea) return false;
+    if (busca) {
+      const hay = [r.linea, r.linea_desc, r.equipo, r.cod_equipo, r.tecnico_nombre, r.descripcion, r.sector].join(' ').toLowerCase();
+      if (!hay.includes(busca)) return false;
+    }
+    return true;
+  });
+
+  // Stats
+  document.getElementById('st_mec').textContent = reportes.filter(r=>r.tipo_falla==='Falla Mecánica').length;
+  document.getElementById('st_elec').textContent = reportes.filter(r=>r.tipo_falla==='Falla Eléctrica').length;
+  document.getElementById('st_neum').textContent = reportes.filter(r=>r.tipo_falla==='Falla Neumática').length;
+  document.getElementById('st_reg').textContent = reportes.filter(r=>r.tipo_falla==='Regulación').length;
+
+  const el = document.getElementById('histContent');
+  if (filtered.length===0) {
+    el.innerHTML = `<div class="empty-hist"><div class="icon">${reportes.length===0?'📋':'🔍'}</div>${reportes.length===0?'No hay reportes guardados.<br>Creá el primero desde <strong>Nuevo reporte</strong>.':'No hay reportes que coincidan con el filtro.'}</div>`;
+    return;
+  }
+
+  const faultBadge = t => {
+    const m = {'Falla Mecánica':'badge-mec 🔩','Falla Eléctrica':'badge-elec ⚡','Falla Neumática':'badge-neum 💨','Regulación':'badge-reg 🔧'};
+    const [cls, ico] = (m[t]||'badge-gray ❓').split(' ');
+    return `<span class="badge ${cls}">${ico} ${t}</span>`;
+  };
+  const estadoBadge = e => {
+    const m = {
+      'Resuelto definitivo':'badge-green',
+      'Resuelto provisorio':'badge-elec',
+      'En proceso':'badge-gray',
+      'Pendiente repuesto':'badge-mec',
+      'Continuar en próximo turno':'badge-reg'
+    };
+    return `<span class="badge ${m[e]||'badge-gray'}">${e}</span>`;
+  };
+
+  el.innerHTML = `
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+    <table class="hist-table">
+      <thead><tr>
+        <th>#</th><th>Fecha</th><th>Semana</th><th>Línea</th><th>Equipo</th>
+        <th>Tipo de falla</th><th>Técnico</th><th>Estado</th><th style="text-align:center">Acciones</th>
+      </tr></thead>
+      <tbody>
+        ${filtered.map((r,i) => `<tr onclick="verDetalle(${r.id})">
+          <td class="code">#${String(filtered.length-i).padStart(3,'0')}</td>
+          <td style="font-family:'Space Mono',monospace;font-size:11px">${r.fecha}</td>
+          <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--accent)">${r.semana||'—'}</td>
+          <td><div style="font-size:11px;font-family:'Space Mono',monospace;color:var(--accent)">${r.linea}</div><div style="font-size:11px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.linea_desc}</div></td>
+          <td><div style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.equipo}</div><div style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace">${r.cod_equipo}</div></td>
+          <td>${faultBadge(r.tipo_falla)}</td>
+          <td><div style="font-size:12px">${r.tecnico_iniciales}</div><div style="font-size:11px;color:var(--muted)">${r.tecnico_nombre.split(',')[0]}</div></td>
+          <td>${estadoBadge(r.estado)}</td>
+          <td style="text-align:center" onclick="event.stopPropagation()">
+            <button class="btn-ghost btn-sm" style="margin-right:4px" onclick="editarReporte(${r.id})">✏️</button>
+            <button class="btn-ghost btn-sm" style="color:var(--red)" onclick="eliminarReporte(${r.id})">🗑</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function updateHistCount() {
+  document.getElementById('histCount').textContent = reportes.length;
+  // Badge y banner de pendientes
+  var pends = reportes.filter(function(r){ return r.estado === 'Continuar en próximo turno'; });
+  var badge = document.getElementById('pendCount');
+  if(badge){
+    badge.textContent = pends.length;
+    badge.style.background = pends.length > 0 ? '#f59e0b' : '#888';
+  }
+  // Badge repuestos
+  var reps = reportes.filter(function(r){ return r.estado === 'Pendiente repuesto'; });
+  var repBadge = document.getElementById('repCount');
+  if(repBadge){
+    repBadge.textContent = reps.length;
+    repBadge.style.background = reps.length > 0 ? '#2a6496' : '#888';
+  }
+  var banner = document.getElementById('bannerPendientes');
+  if(banner){
+    if(pends.length > 0){
+      banner.style.display = 'flex';
+      document.getElementById('bannerDetalle').textContent = pends.slice(0,3).map(function(r){
+        return r.linea + ' — ' + r.equipo;
+      }).join(' · ') + (pends.length > 3 ? ' · y ' + (pends.length-3) + ' más' : '');
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+}
+
+// ─── DETALLE MODAL ─────────────────────────────────────────────────────────────
+function verDetalle(id) {
+  const r = reportes.find(x=>x.id===id);
+  if (!r) return;
+  const faultColors = {'Falla Mecánica':'var(--mec)','Falla Eléctrica':'var(--elec)','Falla Neumática':'var(--neum)','Regulación':'var(--reg)'};
+  const fc = faultColors[r.tipo_falla] || 'var(--accent)';
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-header">
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:10px;color:${fc};letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">${r.tipo_falla}</div>
+        <div class="modal-title">${r.equipo}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${r.linea} — ${r.linea_desc}</div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">×</button>
+    </div>
+    <div class="modal-grid" style="margin-bottom:14px">
+      <div class="modal-field"><label>Fecha</label><p>${r.fecha}${r.hora_inicio?' · '+r.hora_inicio:''} ${r.hora_fin?'→ '+r.hora_fin:''}</p></div>
+    <div class="modal-field"><label>Tiempo de atención</label><p style="font-family:'Space Mono',monospace;font-weight:700;color:var(--orange)">${fmtTiempo(r.hora_inicio,r.hora_fin)}</p></div>
+      <div class="modal-field"><label>Semana / Sector</label><p>${r.semana||'—'} · ${r.sector||'—'}</p></div>
+    </div>
+    <div class="modal-field"><label>Descripción del problema</label><p class="multiline">${r.descripcion}</p></div>
+    ${r.componente?`<div class="modal-field"><label>Componente que falló</label><p>${r.componente}</p></div>`:''}
+    ${r.porques.length?`<div class="modal-field"><label>Análisis 5 Por Qué</label><div style="display:flex;flex-direction:column;gap:6px">${r.porques.map((p,i)=>`<div style="display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:center"><span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);font-weight:700">${i+1}</span><p style="margin:0">${p}</p></div>`).join('')}</div></div>`:''}
+    ${r.causas.length?`<div class="modal-field"><label>Causa raíz</label><p>${r.causas.join(', ')}</p></div>`:''}
+    <div class="modal-grid">
+      <div class="modal-field"><label>Técnico responsable</label><p>${r.tecnico_nombre} (${r.tecnico_iniciales})<br><span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">${r.tecnico_legajo}</span></p></div>
+      ${r.tecnico2_nombre?`<div class="modal-field"><label>Técnico 2</label><p>${r.tecnico2_nombre}<br><span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">${r.tecnico2_legajo}</span></p></div>`:'<div class="modal-field"><label>Estado</label><p>'+r.estado+'</p></div>'}
+    </div>
+    ${r.tecnico2_nombre?`<div class="modal-field"><label>Estado</label><p>${r.estado}</p></div>`:''}
+    ${r.acciones?`<div class="modal-field"><label>Acciones tomadas${r.tecnico2_nombre?' — '+r.tecnico_nombre:''}</label><p class="multiline">${r.acciones}</p></div>`:''}
+    ${r.obs?`<div class="modal-field"><label>Observaciones${r.tecnico2_nombre?' — '+r.tecnico_nombre:''}</label><p class="multiline">${r.obs}</p></div>`:''}
+    ${r.acciones2?`<div class="modal-field"><label>Acciones tomadas — ${r.tecnico2_nombre}</label><p class="multiline">${r.acciones2}</p></div>`:''}
+    ${r.obs2?`<div class="modal-field"><label>Observaciones — ${r.tecnico2_nombre}</label><p class="multiline">${r.obs2}</p></div>`:''}
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <button class="btn-ghost btn-sm" onclick="closeModalDirect()">Cerrar</button>
+      <button class="btn btn-sm" onclick="closeModalDirect();editarReporte(${r.id})">✏️ Editar</button>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal(e) { if (e.target===document.getElementById('modalOverlay')) closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+// ─── EDIT / DELETE ────────────────────────────────────────────────────────────
+function editarReporte(id) {
+  const r = reportes.find(x=>x.id===id);
+  if (!r) return;
+  editingId = id;
+  switchTab('nuevo');
+  setTimeout(() => {
+    document.getElementById('f_fecha').value = r.fecha;
+    document.getElementById('f_hora_inicio').value = r.hora_inicio;
+    document.getElementById('f_hora_fin').value = r.hora_fin;
+    document.getElementById('f_sector').value = r.sector;
+    document.getElementById('f_semana').value = r.semana;
+    document.getElementById('f_linea').value = r.linea;
+    loadEquipos();
+    setTimeout(() => {
+      document.getElementById('f_equipo').value = r.equipo;
+      document.getElementById('f_cod_equipo').value = r.cod_equipo;
+    }, 50);
+    const radio = document.querySelector(`input[name=tipo_falla][value="${r.tipo_falla}"]`);
+    if (radio) radio.checked = true;
+    document.getElementById('f_descripcion').value = r.descripcion;
+    document.getElementById('f_componente').value = r.componente;
+    ['pq1','pq2','pq3','pq4','pq5'].forEach((id,i) => {
+      document.getElementById(id).value = r.porques[i] || '';
+    });
+    ['cr1','cr2','cr3','cr4','cr5','cr6','cr7'].forEach(cid => {
+      document.getElementById(cid).checked = r.causas.includes(document.getElementById(cid).value);
+    });
+    document.getElementById('f_tecnico').value = r.tecnico_legajo;
+    document.getElementById('f_estado').value = r.estado;
+    document.getElementById('f_acciones').value = r.acciones;
+    document.getElementById('f_obs').value = r.obs;
+  }, 50);
+}
+
+function eliminarReporte(id) {
+  if (!confirm('¿Eliminar este reporte?')) return;
+  reportes = reportes.filter(r=>r.id!==id);
+  updateHistCount();
+  renderHistorial();
+  showToast('🗑 Reporte eliminado');
+  sincronizar('eliminar', {id:id});
+}
+
+// ─── EXPORT CSV ───────────────────────────────────────────────────────────────
+function exportXLSX() {
+  if (!reportes.length) { showToast('⚠️ No hay reportes para exportar', 'error'); return; }
+
+  const headers = ['ID','Fecha','Hora Inicio','Hora Fin','Semana','Sector',
+    'Código Línea','Línea','Código Equipo','Equipo',
+    'Tipo de Falla','Descripción del Problema','Componente que Falló',
+    'Por Qué 1','Por Qué 2','Por Qué 3','Por Qué 4','Por Qué 5',
+    'Causas Raíz','Técnico 1','Legajo 1','Técnico 2','Legajo 2','Estado',
+    'Acciones Técnico 1','Observaciones Técnico 1','Acciones Técnico 2','Observaciones Técnico 2'];
+
+  const rows = reportes.map(r => [
+    r.id, r.fecha, r.hora_inicio||'', r.hora_fin||'', r.semana||'', r.sector||'',
+    r.linea, r.linea_desc, r.cod_equipo, r.equipo,
+    r.tipo_falla, r.descripcion, r.componente||'',
+    r.porques[0]||'', r.porques[1]||'', r.porques[2]||'', r.porques[3]||'', r.porques[4]||'',
+    r.causas.join(', '), r.tecnico_nombre, r.tecnico_legajo,
+    r.tecnico2_nombre||'', r.tecnico2_legajo||'', r.estado,
+    r.acciones||'', r.obs||'', r.acciones2||'', r.obs2||''
+  ]);
+
+  const wsData = [headers, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Column widths
+  const colWidths = [8,12,10,10,8,14,10,32,10,32,16,40,20,30,30,30,30,30,30,22,10,18,40,30];
+  ws['!cols'] = colWidths.map(w => ({wch: w}));
+
+  // Style header row (SheetJS free doesn't support cell styles, but we can freeze row)
+  ws['!freeze'] = {xSplit:0, ySplit:1};
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Reportes de Falla');
+
+  // Summary sheet
+  const faultCounts = {'Falla Mecánica':0,'Falla Eléctrica':0,'Falla Neumática':0,'Regulación':0};
+  reportes.forEach(r => { if(faultCounts[r.tipo_falla]!==undefined) faultCounts[r.tipo_falla]++; });
+  const estadoCounts = {};
+  reportes.forEach(r => { estadoCounts[r.estado] = (estadoCounts[r.estado]||0)+1; });
+  const lineCounts = {};
+  reportes.forEach(r => { lineCounts[r.linea+' – '+r.linea_desc] = (lineCounts[r.linea+' – '+r.linea_desc]||0)+1; });
+  const horasArr = reportes.map(r => calcHours(r.hora_inicio, r.hora_fin)).filter(h => h!==null && h>0);
+  const avgH = horasArr.length ? (horasArr.reduce((a,b)=>a+b,0)/horasArr.length).toFixed(1) : '—';
+
+  const sumData = [
+    ['RESUMEN GENERAL',''],
+    ['Total reportes', reportes.length],
+    ['Promedio horas de atención', avgH],
+    [''],
+    ['POR TIPO DE FALLA','Cantidad'],
+    ...Object.entries(faultCounts).map(([k,v]) => [k, v]),
+    [''],
+    ['POR ESTADO','Cantidad'],
+    ...Object.entries(estadoCounts).map(([k,v]) => [k, v]),
+    [''],
+    ['LÍNEAS MÁS AFECTADAS (Top 10)','Intervenciones'],
+    ...Object.entries(lineCounts).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v]) => [k, v]),
+  ];
+  const wsSummary = XLSX.utils.aoa_to_sheet(sumData);
+  wsSummary['!cols'] = [{wch:42},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
+
+  const fecha = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `Reportes_Falla_${fecha}.xlsx`);
+  showToast('⬇️ Excel exportado correctamente');
+}
+
+// ─── IMPORT FILE (xlsx or csv) ───────────────────────────────────────────────
+function importFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const isXLSX = file.name.endsWith('.xlsx');
+  if (isXLSX) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        if (rows.length < 2) { showToast('⚠️ Archivo vacío', 'error'); return; }
+        const dataRows = rows.slice(1);
+        const parsed = dataRows.filter(r => r[1] && r[6]).map((r,i) => ({
+          id: parseInt(r[0]) || Date.now()+i,
+          fecha: String(r[1]||''), hora_inicio: String(r[2]||''), hora_fin: String(r[3]||''),
+          semana: String(r[4]||''), sector: String(r[5]||''),
+          linea: String(r[6]||''), linea_desc: String(r[7]||''),
+          cod_equipo: String(r[8]||''), equipo: String(r[9]||''),
+          tipo_falla: String(r[10]||''), descripcion: String(r[11]||''),
+          componente: String(r[12]||''),
+          porques: [r[13],r[14],r[15],r[16],r[17]].map(String).filter(s=>s&&s!=='undefined'),
+          causas: String(r[18]||'').split(', ').filter(Boolean),
+          tecnico_nombre: String(r[19]||''), tecnico_legajo: String(r[20]||''),
+          tecnico_iniciales: String(r[19]||'').split(',')[0]?.slice(0,3)||'',
+          estado: String(r[21]||'En proceso'),
+          acciones: String(r[22]||''), obs: String(r[23]||''),
+          created_at: new Date().toISOString(),
+        }));
+        finishImport(parsed);
+      } catch(err) { showToast('⚠️ Error al leer el archivo', 'error'); }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    // fallback CSV
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const lines = e.target.result.split('\n').filter(l=>l.trim());
+        if (lines.length < 2) { showToast('⚠️ CSV vacío', 'error'); return; }
+        const parsed = [];
+        for (let i=1; i<lines.length; i++) {
+          const row = parseCSVRow(lines[i]);
+          if (row.length < 10 || !row[1]) continue;
+          parsed.push({
+            id: parseInt(row[0])||Date.now()+i, fecha:row[1], hora_inicio:row[2]||'', hora_fin:row[3]||'',
+            semana:row[4]||'', sector:row[5]||'', linea:row[6]||'', linea_desc:row[7]||'',
+            cod_equipo:row[9]||'', equipo:row[8]||'', tipo_falla:row[10]||'',
+            descripcion:row[11]||'', componente:row[12]||'',
+            porques:(row[13]||'').split(' | ').filter(Boolean),
+            causas:(row[14]||'').split(' | ').filter(Boolean),
+            tecnico_nombre:row[15]||'', tecnico_legajo:row[16]||'',
+            tecnico_iniciales:(row[15]||'').split(',')[0]?.slice(0,3)||'',
+            estado:row[17]||'En proceso', acciones:row[18]||'', obs:row[19]||'',
+            created_at: new Date().toISOString(),
+          });
+        }
+        finishImport(parsed);
+      } catch(err) { showToast('⚠️ Error al leer el CSV', 'error'); }
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+  event.target.value = '';
+}
+
+function finishImport(parsed) {
+  if (!parsed.length) { showToast('⚠️ No se encontraron registros válidos', 'error'); return; }
+  const action = reportes.length > 0
+    ? confirm(`¿Reemplazar los ${reportes.length} reportes actuales con los ${parsed.length} del archivo?\n\nAceptar = reemplazar · Cancelar = agregar al historial existente`)
+    : true;
+  const idsExistentes = new Set(reportes.map(r=>r.id));
+  var aSincronizar = [];
+  if (action) {
+    reportes = parsed;
+    aSincronizar = parsed;
+  } else {
+    const nuevos = parsed.filter(r => !idsExistentes.has(r.id));
+    nuevos.forEach(r => reportes.unshift(r));
+    aSincronizar = nuevos;
+  }
+  aSincronizar.forEach(function(r){
+    sincronizar(idsExistentes.has(r.id) ? 'editar' : 'nuevo', r);
+  });
+  updateHistCount();
+  renderHistorial();
+  showToast(`✅ ${parsed.length} reportes importados`);
+}
+
+// ─── IMPORT CSV (legacy) ──────────────────────────────────────────────────────
+function importCSV(event) { importFile(event); }
+
+function parseCSVRow(line) {
+  const result = []; let cur = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+
+function calcHours(ini, fin) {
+  if (!ini || !fin) return null;
+  const [h1,m1] = ini.split(':').map(Number);
+  const [h2,m2] = fin.split(':').map(Number);
+  let mins = (h2*60+m2) - (h1*60+m1);
+  if (mins < 0) mins += 1440;
+  return Math.round(mins * 10) / 10 / 60;
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type==='error' ? 'var(--red)' : 'var(--green)';
+  t.style.color = '#fff';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── DETECCIÓN DE PESTAÑA DUPLICADA ─────────────────────────────────────────
+(function(){
+  var CANAL_KEY = 'akapol_falla_activa';
+  var tabId = Date.now() + '_' + Math.random();
+
+  // Verificar si ya hay otra pestaña abierta
+  var activa = localStorage.getItem(CANAL_KEY);
+  if(activa){
+    var diff = Date.now() - parseInt(activa.split('_')[0]);
+    if(diff < 10000){ // menos de 10 segundos → hay otra pestaña activa
+      var d = document.createElement('div');
+      d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center';
+      d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:28px 24px;width:380px;max-width:95vw;text-align:center">'+
+        '<div style="font-size:36px;margin-bottom:12px">⚠️</div>'+
+        '<div style="font-size:16px;font-weight:800;color:#1c1a17;margin-bottom:8px">Ya hay una pestaña abierta</div>'+
+        '<div style="font-size:13px;color:#7a7570;margin-bottom:20px;line-height:1.5">El reporte de falla ya está abierto en otra pestaña o ventana del navegador.<br><br>Cerrá la otra pestaña antes de continuar para evitar pérdida de datos.</div>'+
+        '<div style="display:flex;gap:8px;justify-content:center">'+
+          '<button onclick="cerrarAvisoTab(this)" style="padding:11px 20px;background:#c45c1a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Continuar de todas formas</button>'+
+          '<button onclick="window.close()" style="padding:11px 20px;background:none;border:1.5px solid #dedad4;color:#7a7570;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Cerrar esta pestaña</button>'+
+        '</div>'+
+      '</div>';
+      document.body.appendChild(d);
+    }
+  }
+
+  function cerrarAvisoTab(el){ var m=el.closest('[style]'); if(m) m.remove(); registrarPestana(); }
+
+  function registrarPestana(){
+    localStorage.setItem(CANAL_KEY, tabId);
+  }
+  registrarPestana();
+
+  // Renovar cada 5 segundos para mantener la pestaña "viva"
+  setInterval(registrarPestana, 5000);
+
+  // Al cerrar, liberar el registro
+  window.addEventListener('beforeunload', function(){
+    var actual = localStorage.getItem(CANAL_KEY);
+    if(actual === tabId) localStorage.removeItem(CANAL_KEY);
+  });
+})();
+
+// ─── START ─────────────────────────────────────────────────────────────────────
+init();
+// ── CARGA EN TIEMPO REAL DESDE LA PLANILLA ──
+cargarDesdeSheet(function(){
+  updateHistCount();
+  renderHistorial();
+});
+setInterval(function(){
+  cargarDesdeSheet(function(){
+    updateHistCount();
+    // Solo re-renderizar Historial/Pendientes/Repuestos si es la solapa activa,
+    // para no interrumpir a alguien completando el formulario de Nuevo reporte
+    var activo = document.querySelector('.tab-btn.active');
+    var id = activo ? activo.id : '';
+    if(id==='tab-btn-historial') renderHistorial();
+    if(id==='tab-btn-pendientes') renderPendientes();
+    if(id==='tab-btn-repuestos') renderRepuestos();
+  });
+}, 20000);
+</script>
+</body>
+</html>
