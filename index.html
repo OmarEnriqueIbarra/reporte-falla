@@ -699,7 +699,7 @@ function init() {
   // Set today's date
   document.getElementById('f_fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('f_semana').dataset.manual = '';
-  document.getElementById('f_semana').value = '';
+  onFechaChange(); // v2: asignar .value por código no dispara 'onchange', hay que calcular semana a mano acá
   updateHistCount();
 }
 
@@ -884,7 +884,7 @@ function resetForm() {
   editingId = null;
   document.getElementById('f_fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('f_semana').dataset.manual = '';
-  document.getElementById('f_semana').value = '';
+  onFechaChange(); // v2: idem init() — recalcula semana para la fecha de hoy que se acaba de fijar por código
   document.getElementById('f_hora_inicio').value = '';
   document.getElementById('f_hora_fin').value = '';
   document.getElementById('tiempoAtencionField').style.display = 'none';
